@@ -8,8 +8,10 @@ from random import randrange
 def main():
 
     img = cv.imread('../example_imgs/gallery_1.jpg',cv.IMREAD_COLOR)
+    '''
     #img Shape = (H,W,3)
     cv.imshow("Source", img)
+    #cv.waitKey()
 
     #img = cv.bilateralFilter(img,9,40,40)
     #cv.imshow("Bilateral", img)
@@ -23,11 +25,11 @@ def main():
 
     #Option 1: Adaptive thresholding
     '''
-    wall_mask = cv.adaptiveThreshold(gray_img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV,31, 10)
-    cv.imshow("adaptive_thresh", wall_mask)
-    dilate_kernel = np.ones((3, 3), np.uint8)
-    wall_mask = cv.dilate(wall_mask, dilate_kernel, iterations=1)
-    cv.imshow("Dilating", wall_mask)
+    # wall_mask = cv.adaptiveThreshold(gray_img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV,31, 10)
+    # cv.imshow("adaptive_thresh", wall_mask)
+    # dilate_kernel = np.ones((3, 3), np.uint8)
+    # wall_mask = cv.dilate(wall_mask, dilate_kernel, iterations=1)
+    # cv.imshow("Dilating", wall_mask)
     '''
 
     # Option 2: Global thresholding otsu
@@ -41,7 +43,7 @@ def main():
     wall_mask = cv.erode(wall_mask, erode_kernel, iterations=10)
     #cv.imshow("Erode", wall_mask)
     wall_mask = cv.dilate(wall_mask, dilate_kernel, iterations=8)
-    cv.imshow("Dilate2", wall_mask)
+    #cv.imshow("Dilate2", wall_mask)
 
     #Overlap mask with original image
     rgb_wall_mask = cv.cvtColor(wall_mask, cv.COLOR_GRAY2BGR)
@@ -69,10 +71,10 @@ def main():
             cv.line(cimg, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 3, cv.LINE_AA)
 
     cv.imshow("Detected Lines (in red) - Hough Line Transform", cimg)
-
-
-    #-------------------Method found on github ACTUALLY NOT WORKING----------------------
+    cv.waitKey()
     '''
+    #-------------------Method found on github ACTUALLY NOT WORKING----------------------
+
     cl = img.copy()
     mask = np.zeros((img.shape[0] + 2, img.shape[1] + 2), dtype=np.uint8)
     color_difference = np.full((3,1), 2, dtype=np.uint8)
@@ -82,8 +84,8 @@ def main():
     for y in range(img.shape[0]):
         for x in range(img.shape[1]):
             if mask[y+1, x+1] == 0:
-                new_val = np.random.randint(255, size=3, dtype=np.uint8)
-                retval1,ret2,ret3, rect = cv.floodFill(cl, mask, (x,y), new_val, flags=cv.FLOODFILL_FIXED_RANGE)
+                new_val = tuple(np.random.randint(255, size=3, dtype=np.uint8))
+                retval1,ret2,ret3, rect = cv.floodFill(cl, mask, (x,y), (255,0,0), flags=cv.FLOODFILL_FIXED_RANGE)  # ho sostituito tra i parametri della funzione new_val con (255, 0, 0) per farlo compilare
                 segment_size = len(rect)
                 if segment_size > largest_segment:
                     largest_segment = segment_size
@@ -92,7 +94,13 @@ def main():
     wall_color2 = np.full((3,1), 100, dtype=np.uint8)
     wall_mask = cv.inRange(img, wall_color1, wall_color2)
     cv.imshow("Wall mask", wall_mask)
-    '''
+
+    rgb_wall_mask = cv.cvtColor(wall_mask, cv.COLOR_GRAY2BGR)
+    overlap_img = cv.bitwise_and(img, rgb_wall_mask)
+    cv.imshow("Overlapped img", overlap_img)
+
+    cv.waitKey()
+
 
 if __name__ == '__main__':
     main()
