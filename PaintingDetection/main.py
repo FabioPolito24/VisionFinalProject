@@ -1,10 +1,9 @@
 import cv2
 from cv2 import VideoWriter_fourcc
-import numpy as np
-import math
+from utils import print_rectangles_with_findContours, houghLines, isolate_painting
 
 
-cap = cv2.VideoCapture('VIRB0398.MP4')
+cap = cv2.VideoCapture('VIRB0395.MP4')
 
 # Check if camera opened successfully
 if not cap.isOpened():
@@ -18,25 +17,25 @@ while cap.isOpened():
         # in the image
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), cv2.BORDER_DEFAULT)
-        edged = cv2.Canny(gray, 40, 100)
+        edged = cv2.Canny(gray, 20, 50)
+        contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-        lines = cv2.HoughLines(edged, 1, np.pi / 180, 130, None, 0, 0)
-        # Draw the lines
-        if lines is not None:
-            for i in range(0, len(lines)):
-                rho = lines[i][0][0]
-                theta = lines[i][0][1]
-                a = math.cos(theta)
-                b = math.sin(theta)
-                x0 = a * rho
-                y0 = b * rho
-                pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * a))
-                pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * a))
-                cv2.line(edged, pt1, pt2, (255, 255, 255), 3)
+        cnts_img = edged.copy()
+        cv2.drawContours(cnts_img, contours, -1, (255, 255, 255), 3)
+        cv2.imshow('Contours', cnts_img)
 
-        img.append(edged)
+        rects = print_rectangles_with_findContours(edged.copy(), frame.copy())
+        cv2.imshow('Rectangles', rects)
 
-        cv2.imshow('Frame', edged)
+        lines = houghLines(edged.copy())
+        # lines fa talmente schifo che non vale la pena di stamparla
+
+        hsv_isolation = isolate_painting(frame)
+        cv2.imshow('HSV Isolation', hsv_isolation)
+
+        img.append(frame)
+
+        # cv2.imshow('Frame', edged)
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
 
