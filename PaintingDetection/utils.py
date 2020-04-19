@@ -5,15 +5,34 @@ import math
 
 def print_rectangles_with_findContours(edged, frame):
     contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-    for contour in contours:
+    rects = np.ones([len(contours), ])
+    # seleziono solo i contorni validi
+    for i, contour in enumerate(contours):
         try:
-            (x, y, w, h) = cv2.boundingRect(contour)
-            if w * h > 5000:
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            (x0, y0, w0, h0) = cv2.boundingRect(contour)
+            if w0 * h0 < 50000:
+                # cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
+                rects[i] = 0
         except:
-            pass
-
+            rects[i] = 0
+    # stampo i rettangoli che non sono contenuti dentro altri rettangoli
+    for i, contour in enumerate(contours):
+        if rects[i]:
+            (x0, y0, w0, h0) = cv2.boundingRect(contour)
+            for j, c in enumerate(contours):
+                if rects[j]:
+                    # se contour e c sono lo stesso contorno, vado avanti
+                    if np.all(c == contour):
+                        continue
+                    else:
+                        # controllo se contour è contenuto in c
+                        (x1, y1, w1, h1) = cv2.boundingRect(c)
+                        if x1 > x0 and y1 > y0 and x1 + w1 < x0 + w0 and y1 + h1 < y0 + h0:
+                            # contour è contenuto in c quindi lo tolgo dalla lista
+                            rects[i] = 0
+                            break
+            if rects[i] == 1:
+                cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
     return frame
 
 

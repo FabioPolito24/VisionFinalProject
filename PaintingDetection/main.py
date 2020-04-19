@@ -3,7 +3,7 @@ from cv2 import VideoWriter_fourcc
 from utils import print_rectangles_with_findContours, houghLines, isolate_painting
 import numpy as np
 
-cap = cv2.VideoCapture('VIRB0395.MP4')
+cap = cv2.VideoCapture('videos/VIRB0398.MP4')
 
 # Check if camera opened successfully
 if not cap.isOpened():
@@ -21,27 +21,28 @@ while cap.isOpened():
         #gray = cv2.GaussianBlur(gray, (5, 5), cv2.BORDER_DEFAULT)
         gray = cv2.bilateralFilter(gray, 9, 40, 40)
 
-        #Otsu thresholding
-        ret, thresh1 = cv2.threshold(gray, 120, 255, cv2.THRESH_OTSU)
-        gray = (gray > thresh1).astype(np.uint8) * 255
-        #cv2.imshow('Otsu Threshold', gray)
+        # #Otsu thresholding
+        # _, thresh1 = cv2.threshold(gray, 120, 255, cv2.THRESH_OTSU)
+        # gray = (gray > thresh1).astype(np.uint8) * 255
+        # # cv2.imshow('Otsu Threshold', gray)
 
         #Canny edge detection
-        edged = cv2.Canny(gray, 50, 100)
-        #cv2.imshow('Canny', edged)
+        edged = cv2.Canny(gray, 25, 50)
+        # cv2.imshow('Canny', edged)
 
         #Dilata/erodi i bordi ottenuti con Canny
         dilate_kernel = np.ones((5, 5), np.uint8)
         edged = cv2.dilate(edged, dilate_kernel, iterations=2)
+        cv2.imshow('Canny + dilate', edged)
         #edged = cv2.erode(edged, dilate_kernel, iterations=2)
 
-        #Cerca i contorni
-        contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-        #Disegna i Contorni trovati in verde
-        cnts_img = edged.copy()
-        cv2.drawContours(cnts_img, contours, -1, (255, 255, 255), 3)
-        cv2.imshow('Contours', cnts_img)
+        # #Cerca i contorni
+        # contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        #
+        # #Disegna i Contorni trovati in verde
+        # cnts_img = edged.copy()
+        # cv2.drawContours(cnts_img, contours, -1, (255, 255, 255), 3)
+        # cv2.imshow('Contours', cnts_img)
 
         rects = print_rectangles_with_findContours(edged.copy(), frame.copy())
         cv2.imshow('Rectangles', rects)
@@ -52,7 +53,7 @@ while cap.isOpened():
         #hsv_isolation = isolate_painting(frame)
         #cv2.imshow('HSV Isolation', hsv_isolation)
 
-        img.append(frame)
+        img.append(rects)
 
         # cv2.imshow('Frame', edged)
         if cv2.waitKey(25) & 0xFF == ord('q'):
