@@ -45,7 +45,7 @@ def tkThreadingTest():
     class AnalyzerGUI:
         def __init__(self, master):
             self.master = master
-            self.master.geometry("600x400")
+            self.master.geometry("600x400+180+180")
             self.master.title("Video Analyzer")
             Label(self.master, text="Insert path to a video").pack()
             self.entry = Entry()
@@ -123,6 +123,8 @@ def tkThreadingTest():
 
             cap.release()
             cv2.destroyAllWindows()
+            self.rects_label.configure(image="")
+            self.rects_label.image = ""
 
     root = Tk()
     AnalyzerGUI(root)
