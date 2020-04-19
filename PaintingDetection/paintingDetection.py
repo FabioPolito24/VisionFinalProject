@@ -8,7 +8,7 @@ from random import randrange
 def main():
 
     img = cv.imread('../example_imgs/gallery_1.jpg',cv.IMREAD_COLOR)
-    '''
+
     #img Shape = (H,W,3)
     cv.imshow("Source", img)
     #cv.waitKey()
@@ -35,7 +35,7 @@ def main():
     # Option 2: Global thresholding otsu
     ret, thresh1 = cv.threshold(gray_img, 120, 255, cv.THRESH_OTSU)
     wall_mask = (gray_img > thresh1).astype(np.uint8) * 255
-    #cv.imshow("Otsu thresholds", wall_mask)
+    cv.imshow("Otsu thresholds", wall_mask)
     erode_kernel = np.ones((4, 4), np.uint8)
     dilate_kernel = np.ones((4, 4), np.uint8)
     wall_mask = cv.dilate(wall_mask, dilate_kernel, iterations=2)
@@ -46,8 +46,8 @@ def main():
     #cv.imshow("Dilate2", wall_mask)
 
     #Overlap mask with original image
-    rgb_wall_mask = cv.cvtColor(wall_mask, cv.COLOR_GRAY2BGR)
-    overlap_img = cv.bitwise_and(img, rgb_wall_mask)
+    #rgb_wall_mask = cv.cvtColor(wall_mask, cv.COLOR_GRAY2BGR)
+    #overlap_img = cv.bitwise_and(img, rgb_wall_mask)
     #cv.imshow("Overlapped img", overlap_img)
 
     # Edge detection
@@ -71,10 +71,9 @@ def main():
             cv.line(cimg, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 3, cv.LINE_AA)
 
     cv.imshow("Detected Lines (in red) - Hough Line Transform", cimg)
-    cv.waitKey()
+
     '''
     #-------------------Method found on github ACTUALLY NOT WORKING----------------------
-
     cl = img.copy()
     mask = np.zeros((img.shape[0] + 2, img.shape[1] + 2), dtype=np.uint8)
     color_difference = np.full((3,1), 2, dtype=np.uint8)
@@ -94,10 +93,11 @@ def main():
     wall_color2 = np.full((3,1), 100, dtype=np.uint8)
     wall_mask = cv.inRange(img, wall_color1, wall_color2)
     cv.imshow("Wall mask", wall_mask)
-
+    '''
     rgb_wall_mask = cv.cvtColor(wall_mask, cv.COLOR_GRAY2BGR)
     overlap_img = cv.bitwise_and(img, rgb_wall_mask)
     cv.imshow("Overlapped img", overlap_img)
+
 
     cv.waitKey()
 

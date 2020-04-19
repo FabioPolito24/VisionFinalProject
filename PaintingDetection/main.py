@@ -1,7 +1,7 @@
 import cv2
 from cv2 import VideoWriter_fourcc
 from utils import print_rectangles_with_findContours, houghLines, isolate_painting
-
+import numpy as np
 
 cap = cv2.VideoCapture('VIRB0395.MP4')
 
@@ -16,10 +16,29 @@ while cap.isOpened():
         # convert the image to grayscale, blur it, and find edges
         # in the image
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (5, 5), cv2.BORDER_DEFAULT)
-        edged = cv2.Canny(gray, 20, 50)
+
+        #Applichiamo un filtro
+        #gray = cv2.GaussianBlur(gray, (5, 5), cv2.BORDER_DEFAULT)
+        gray = cv2.bilateralFilter(gray, 9, 40, 40)
+
+        #Otsu thresholding
+        ret, thresh1 = cv2.threshold(gray, 120, 255, cv2.THRESH_OTSU)
+        gray = (gray > thresh1).astype(np.uint8) * 255
+        #cv2.imshow('Otsu Threshold', gray)
+
+        #Canny edge detection
+        edged = cv2.Canny(gray, 50, 100)
+        #cv2.imshow('Canny', edged)
+
+        #Dilata/erodi i bordi ottenuti con Canny
+        dilate_kernel = np.ones((5, 5), np.uint8)
+        edged = cv2.dilate(edged, dilate_kernel, iterations=2)
+        #edged = cv2.erode(edged, dilate_kernel, iterations=2)
+
+        #Cerca i contorni
         contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
+        #Disegna i Contorni trovati in verde
         cnts_img = edged.copy()
         cv2.drawContours(cnts_img, contours, -1, (255, 255, 255), 3)
         cv2.imshow('Contours', cnts_img)
@@ -27,11 +46,11 @@ while cap.isOpened():
         rects = print_rectangles_with_findContours(edged.copy(), frame.copy())
         cv2.imshow('Rectangles', rects)
 
-        lines = houghLines(edged.copy())
+        #lines = houghLines(edged.copy())
         # lines fa talmente schifo che non vale la pena di stamparla
 
-        hsv_isolation = isolate_painting(frame)
-        cv2.imshow('HSV Isolation', hsv_isolation)
+        #hsv_isolation = isolate_painting(frame)
+        #cv2.imshow('HSV Isolation', hsv_isolation)
 
         img.append(frame)
 
