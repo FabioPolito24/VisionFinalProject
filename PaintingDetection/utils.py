@@ -6,6 +6,7 @@ import math
 def print_rectangles_with_findContours(edged, frame):
     contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     rects = np.ones([len(contours), ])
+    bounding_boxes = []
     # seleziono solo i contorni validi
     for i, contour in enumerate(contours):
         try:
@@ -33,7 +34,8 @@ def print_rectangles_with_findContours(edged, frame):
                             break
             if rects[i] == 1:
                 cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
-    return frame
+                bounding_boxes.append([x0, y0, w0, h0])
+    return frame, bounding_boxes
 
 
 def houghLines(edged):

@@ -1,9 +1,9 @@
 import cv2
 import numpy as np
 from cv2 import VideoWriter_fourcc
-from utils import print_rectangles_with_findContours, houghLines, isolate_painting
+from utils import print_rectangles_with_findContours
 from tkinter import *
-from tkinter.ttk import *
+from PIL import Image, ImageTk
 
 
 def analyze():
@@ -17,49 +17,33 @@ def analyze():
     while cap.isOpened():
         ret, frame = cap.read()
         if ret:
+            img0 = Image.fromarray(cv2.resize(frame, (80, 60)))
+            img0 = ImageTk.PhotoImage(image=img0)
+            Label(tk, image=img0).pack()
             # convert the image to grayscale, blur it, and find edges
             # in the image
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            # Applichiamo un filtro
-            # gray = cv2.GaussianBlur(gray, (5, 5), cv2.BORDER_DEFAULT)
+            # apply bilateral filter
             gray = cv2.bilateralFilter(gray, 9, 40, 40)
-
-            # #Otsu thresholding
-            # _, thresh1 = cv2.threshold(gray, 120, 255, cv2.THRESH_OTSU)
-            # gray = (gray > thresh1).astype(np.uint8) * 255
-            # # cv2.imshow('Otsu Threshold', gray)
 
             # Canny edge detection
             edged = cv2.Canny(gray, 25, 50)
             # cv2.imshow('Canny', edged)
 
-            # Dilata/erodi i bordi ottenuti con Canny
+            # dilate borders
             dilate_kernel = np.ones((5, 5), np.uint8)
             edged = cv2.dilate(edged, dilate_kernel, iterations=2)
-            cv2.imshow('Canny + dilate', edged)
-            # edged = cv2.erode(edged, dilate_kernel, iterations=2)
-
-            # #Cerca i contorni
-            # contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-            #
-            # #Disegna i Contorni trovati in verde
-            # cnts_img = edged.copy()
-            # cv2.drawContours(cnts_img, contours, -1, (255, 255, 255), 3)
-            # cv2.imshow('Contours', cnts_img)
+            # cv2.imshow('Canny + dilate', edged)
 
             rects, bounding_boxes = print_rectangles_with_findContours(edged.copy(), frame.copy())
-            cv2.imshow('Rectangles', rects)
-
-            # lines = houghLines(edged.copy())
-            # lines fa talmente schifo che non vale la pena di stamparla
-
-            # hsv_isolation = isolate_painting(frame)
-            # cv2.imshow('HSV Isolation', hsv_isolation)
+            # cv2.imshow('Rectangles', rects)
+            img1 = Image.fromarray(cv2.resize(rects, (80, 60)))
+            img1 = ImageTk.PhotoImage(image=img1)
+            Label(tk, image=img1).pack()
 
             img.append(rects)
 
-            # cv2.imshow('Frame', edged)
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
 
@@ -81,7 +65,7 @@ def analyze():
 
 
 tk = Tk()
-tk.geometry("300x60")
+tk.geometry("500x500")
 tk.title("Video Analyzer")
 label = Label(tk, text="Insert path to a video").pack()
 entry = Entry()
