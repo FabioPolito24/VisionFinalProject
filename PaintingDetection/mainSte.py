@@ -1,6 +1,7 @@
 import cv2
 import threading
 import time
+import os
 import numpy as np
 from cv2 import VideoWriter_fourcc
 from tkinter import messagebox, Label, Entry, Button, Tk
@@ -67,8 +68,21 @@ def tkThreadingTest():
             # Check if camera opened successfully
             if not cap.isOpened():
                 print("Error opening video stream or file")
-
+            try:
+                name = self.entry.get()
+                name = name.split("/")[-1]
+                name = name.split(".")[0]
+                try:
+                    os.mkdir("outputs/" + name)
+                except:
+                    print("Directory for solution not created")
+                file = open("outputs/" + name + "/bounding_boxes.csv", 'w')
+                file.write("frame,rect_id,x,y,w,h\n")
+            except:
+                print("Error creating file for solution")
+                return
             img = []
+            counter = 0
             while cap.isOpened():
                 ret, frame = cap.read()
                 if ret:
@@ -99,14 +113,20 @@ def tkThreadingTest():
                     rects = cv2.cvtColor(rects, cv2.COLOR_BGR2RGB)
                     img1 = Image.fromarray(cv2.resize(rects, dsize))
                     img1 = ImageTk.PhotoImage(image=img1)
-                    # self.rects_label["image"] = img1
                     self.rects_label.configure(image=img1)
                     self.rects_label.image = img1
 
-                    if cv2.waitKey(25) & 0xFF == ord('q'):
-                        break
+                    for i, box in enumerate(bounding_boxes):
+                        box_string = ""
+                        for j in range(3):
+                            box_string += str(box[j]) + ","
+                        box_string += str(box[3])
+                        file.write(str(counter) + "," + str(i) + "," + box_string + "\n")
+                    # if cv2.waitKey(25) & 0xFF == ord('q'):
+                    #     break
                     # sleep because otherwise frames are displayed too rapidly
                     # time.sleep(0.02)
+                    counter += 1
 
                 else:
                     break
@@ -114,7 +134,7 @@ def tkThreadingTest():
             try:
                 height, width, layers = img[1].shape
                 fourcc = VideoWriter_fourcc(*'MP42')
-                video = cv2.VideoWriter('video.avi', fourcc, 24, (width, height))
+                video = cv2.VideoWriter('outputs/' + name + "/video.avi", fourcc, 24, (width, height))
                 for j in range(len(img)):
                     video.write(img[j])
                 video.release()
@@ -123,6 +143,7 @@ def tkThreadingTest():
 
             cap.release()
             cv2.destroyAllWindows()
+            file.close()
             self.rects_label.configure(image="")
             self.rects_label.image = ""
 
