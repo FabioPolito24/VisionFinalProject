@@ -85,7 +85,7 @@ tk.geometry("300x60")
 tk.title("Video Analyzer")
 label = Label(tk, text="Insert path to a video").pack()
 entry = Entry()
-entry.insert(0, "videos/VIRB0395.MP4")
+entry.insert(0, "../videos/vid001.MP4")
 entry.pack()
 submit = Button(tk, text="Submit", command=analyze).pack()
 

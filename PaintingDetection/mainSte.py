@@ -50,7 +50,7 @@ def tkThreadingTest():
             self.master.title("Video Analyzer")
             Label(self.master, text="Insert path to a video").pack()
             self.entry = Entry()
-            self.entry.insert(0, "videos/VIRB0395.MP4")
+            self.entry.insert(0, "../videos/vid001.MP4")
             self.entry.pack()
             Button(root, text="Submit", command=self.onThreadedClicked).pack()
             self.rects_label = Label(self.master, image="")
