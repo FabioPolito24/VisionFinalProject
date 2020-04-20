@@ -11,7 +11,7 @@ def print_rectangles_with_findContours(edged, frame):
     for i, contour in enumerate(contours):
         try:
             (x0, y0, w0, h0) = cv2.boundingRect(contour)
-            if w0 * h0 < 50000:
+            if w0 * h0 < 80000:
                 # cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
                 rects[i] = 0
         except:

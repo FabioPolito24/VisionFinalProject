@@ -72,11 +72,12 @@ def tkThreadingTest():
                 name = self.entry.get()
                 name = name.split("/")[-1]
                 name = name.split(".")[0]
+                folder_name = "outputs/" + name
                 try:
-                    os.mkdir("outputs/" + name)
+                    os.mkdir(folder_name)
                 except:
-                    print("Directory for solution not created")
-                file = open("outputs/" + name + "/bounding_boxes.csv", 'w')
+                    print("Directory for solution not created... Does it already exist?")
+                file = open(folder_name + "/bounding_boxes.csv", 'w')
                 file.write("frame,rect_id,x,y,w,h\n")
             except:
                 print("Error creating file for solution")
@@ -134,7 +135,7 @@ def tkThreadingTest():
             try:
                 height, width, layers = img[1].shape
                 fourcc = VideoWriter_fourcc(*'MP42')
-                video = cv2.VideoWriter('outputs/' + name + "/video.avi", fourcc, 24, (width, height))
+                video = cv2.VideoWriter(folder_name + "/video.avi", fourcc, 24, (width, height))
                 for j in range(len(img)):
                     video.write(img[j])
                 video.release()
@@ -146,6 +147,7 @@ def tkThreadingTest():
             file.close()
             self.rects_label.configure(image="")
             self.rects_label.image = ""
+            messagebox.showinfo("Info", "Video and csv file saved at location ./" + folder_name)
 
     root = Tk()
     AnalyzerGUI(root)
