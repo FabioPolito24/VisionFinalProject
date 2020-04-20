@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import math
+import glob
 
 
 def print_rectangles_with_findContours(edged, frame):
@@ -11,7 +12,7 @@ def print_rectangles_with_findContours(edged, frame):
     for i, contour in enumerate(contours):
         try:
             (x0, y0, w0, h0) = cv2.boundingRect(contour)
-            if w0 * h0 < 80000:
+            if w0 * h0 < 50000:
                 # cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
                 rects[i] = 0
         except:
@@ -61,3 +62,49 @@ def isolate_painting(frame):
     upper_frame_color = np.array([110, 143, 171])
     mask = cv2.inRange(hsv, lower_frame_color, upper_frame_color)
     return mask
+
+
+def preprocessing(frame):
+    # convert the image to grayscale, blur it, and find edges
+    # in the image
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # apply bilateral filter
+    gray = cv2.bilateralFilter(gray, 9, 40, 40)
+    return gray
+
+
+def method_0(frame):
+    gray = preprocessing(frame)
+    # Canny edge detection
+    edged = cv2.Canny(gray, 25, 50)
+    # cv2.imshow('Canny', edged)
+
+    # dilate borders
+    dilate_kernel = np.ones((5, 5), np.uint8)
+    edged = cv2.dilate(edged, dilate_kernel, iterations=2)
+    # cv2.imshow('Canny + dilate', edged)
+    return edged
+
+
+def method_1(frame):
+    gray = preprocessing(frame)
+    # #Otsu thresholding
+    _, thresh1 = cv2.threshold(gray, 120, 255, cv2.THRESH_OTSU)
+    gray = (gray > thresh1).astype(np.uint8) * 255
+
+    # dilate borders
+    dilate_kernel = np.ones((8, 8), np.uint8)
+    edged = cv2.dilate(gray, dilate_kernel, iterations=2)
+    return edged
+
+
+def read_all_paintings():
+    images = glob.glob("../paintings_db/*.png")
+    paintings = []
+    for image in images:
+        img = cv2.imread(image)
+        paintings.append(img)
+
+    for i, img in enumerate(paintings):
+        cv2.imshow("Image", img)
+        cv2.waitKey(0)

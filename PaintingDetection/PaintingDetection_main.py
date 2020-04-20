@@ -6,7 +6,7 @@ import numpy as np
 from cv2 import VideoWriter_fourcc
 from tkinter import messagebox, Label, Entry, Button, Tk
 from PIL import Image, ImageTk
-from utils import print_rectangles_with_findContours
+from utils import print_rectangles_with_findContours, method_0, method_1
 
 
 class BackgroundTask:
@@ -46,15 +46,17 @@ def tkThreadingTest():
     class AnalyzerGUI:
         def __init__(self, master):
             self.master = master
-            self.master.geometry("600x400+180+180")
+            self.master.geometry("600x700+400+180")
             self.master.title("Video Analyzer")
             Label(self.master, text="Insert path to a video").pack()
             self.entry = Entry()
             self.entry.insert(0, "../videos/vid001.MP4")
             self.entry.pack()
             Button(root, text="Submit", command=self.onThreadedClicked).pack()
-            self.rects_label = Label(self.master, image="")
-            self.rects_label.pack()
+            self.rects_label_0 = Label(self.master, image="")
+            self.rects_label_0.pack()
+            self.rects_label_1 = Label(self.master, image="")
+            self.rects_label_1.pack()
 
             self.bg_task = BackgroundTask(self.analyze)
 
@@ -68,6 +70,8 @@ def tkThreadingTest():
             # Check if camera opened successfully
             if not cap.isOpened():
                 print("Error opening video stream or file")
+                messagebox.showerror("Error", "Video not found")
+                return
             try:
                 name = self.entry.get()
                 name = name.split("/")[-1]
@@ -87,35 +91,18 @@ def tkThreadingTest():
             while cap.isOpened():
                 ret, frame = cap.read()
                 if ret:
-                    scale_percent = 40
+                    scale_percent = 30
                     width = int(frame.shape[1] * scale_percent / 100)
                     height = int(frame.shape[0] * scale_percent / 100)
                     dsize = (width, height)
 
-                    # convert the image to grayscale, blur it, and find edges
-                    # in the image
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-                    # apply bilateral filter
-                    gray = cv2.bilateralFilter(gray, 9, 40, 40)
-
-                    # Canny edge detection
-                    edged = cv2.Canny(gray, 25, 50)
-                    # cv2.imshow('Canny', edged)
-
-                    # dilate borders
-                    dilate_kernel = np.ones((5, 5), np.uint8)
-                    edged = cv2.dilate(edged, dilate_kernel, iterations=2)
-                    # cv2.imshow('Canny + dilate', edged)
-
-                    rects, bounding_boxes = print_rectangles_with_findContours(edged.copy(), frame.copy())
+                    rects_0, bounding_boxes = print_rectangles_with_findContours(method_0(frame.copy()), frame.copy())
+                    rects_1, bounding_boxes = print_rectangles_with_findContours(method_1(frame.copy()), frame.copy())
                     # cv2.imshow('Rectangles', rects)
-                    img.append(rects)
-                    rects = cv2.cvtColor(rects, cv2.COLOR_BGR2RGB)
-                    img1 = Image.fromarray(cv2.resize(rects, dsize))
-                    img1 = ImageTk.PhotoImage(image=img1)
-                    self.rects_label.configure(image=img1)
-                    self.rects_label.image = img1
+                    img.append(rects_0)
+
+                    self.print_on_GUI(rects_0, self.rects_label_0, dsize)
+                    self.print_on_GUI(rects_1, self.rects_label_1, dsize)
 
                     for i, box in enumerate(bounding_boxes):
                         box_string = ""
@@ -145,9 +132,18 @@ def tkThreadingTest():
             cap.release()
             cv2.destroyAllWindows()
             file.close()
-            self.rects_label.configure(image="")
-            self.rects_label.image = ""
+            self.rects_label_0.configure(image="")
+            self.rects_label_0.image = ""
+            self.rects_label_1.configure(image="")
+            self.rects_label_1.image = ""
             messagebox.showinfo("Info", "Video and csv file saved at location ./" + folder_name)
+
+        def print_on_GUI(self, rects, label, dsize):
+            rects = cv2.cvtColor(rects, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(cv2.resize(rects, dsize))
+            img = ImageTk.PhotoImage(image=img)
+            label.configure(image=img)
+            label.image = img
 
     root = Tk()
     AnalyzerGUI(root)
