@@ -5,6 +5,7 @@ import glob
 
 
 def print_rectangles_with_findContours(edged, frame):
+    b_hist, g_hist, r_hist = get_mean_hist()
     contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     rects = np.ones([len(contours), ])
     bounding_boxes = []
@@ -34,8 +35,14 @@ def print_rectangles_with_findContours(edged, frame):
                             rects[i] = 0
                             break
             if rects[i] == 1:
-                cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
-                bounding_boxes.append([x0, y0, w0, h0])
+                b, g, r = get_hist(frame[y0:y0+h0, x0:x0+w0, :])
+                mse_b = ((b - b_hist) ** 2)
+                mse_g = ((g - g_hist) ** 2)
+                mse_r = ((r - r_hist) ** 2)
+                mean = (mse_b + mse_g + mse_r) / 3
+                if mean < 100:
+                    cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
+                    bounding_boxes.append([x0, y0, w0, h0])
     return frame, bounding_boxes
 
 
@@ -104,7 +111,66 @@ def read_all_paintings():
     for image in images:
         img = cv2.imread(image)
         paintings.append(img)
+    # for i, img in enumerate(paintings):
+    #     cv2.imshow("Image", img)
+    #     cv2.waitKey(0)
+    return paintings
 
-    for i, img in enumerate(paintings):
-        cv2.imshow("Image", img)
-        cv2.waitKey(0)
+
+def get_mean_hist():
+    imgs = read_all_paintings()
+    histSize = 256
+    histRange = (0, 256)  # the upper boundary is exclusive
+    b_hist = np.zeros((len(imgs), 256, 1))
+    g_hist = np.zeros((len(imgs), 256, 1))
+    r_hist = np.zeros((len(imgs), 256, 1))
+    accumulate = False
+    for i, src in enumerate(imgs):
+        bgr_planes = cv2.split(src)
+        b_hist[i] = cv2.calcHist(bgr_planes, [0], None, [histSize], histRange, accumulate=accumulate)
+        g_hist[i] = cv2.calcHist(bgr_planes, [1], None, [histSize], histRange, accumulate=accumulate)
+        r_hist[i] = cv2.calcHist(bgr_planes, [2], None, [histSize], histRange, accumulate=accumulate)
+    hist_w = 512
+    hist_h = 400
+    bin_w = int(np.round(hist_w / histSize))
+    histImage = np.zeros((hist_h, hist_w, 3), dtype=np.uint8)
+    b_hist = np.mean(b_hist, axis=0)
+    g_hist = np.mean(g_hist, axis=0)
+    r_hist = np.mean(r_hist, axis=0)
+    cv2.normalize(b_hist, b_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(g_hist, g_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(r_hist, r_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
+    for i in range(1, histSize):
+        cv2.line(histImage, (bin_w * (i - 1), hist_h - int(np.round(b_hist[i - 1]))),
+                (bin_w * i, hist_h - int(np.round(b_hist[i]))),
+                (255, 0, 0), thickness=2)
+        cv2.line(histImage, (bin_w * (i - 1), hist_h - int(np.round(g_hist[i - 1]))),
+                (bin_w * i, hist_h - int(np.round(g_hist[i]))),
+                (0, 255, 0), thickness=2)
+        cv2.line(histImage, (bin_w * (i - 1), hist_h - int(np.round(r_hist[i - 1]))),
+                (bin_w * i, hist_h - int(np.round(r_hist[i]))),
+                (0, 0, 255), thickness=2)
+    # cv2.imshow('calcHist Demo', histImage)
+    # cv2.waitKey()
+    return b_hist, g_hist, r_hist
+
+
+def get_hist(src):
+    if src is None:
+        print('Could not open or find the image')
+        exit(0)
+    bgr_planes = cv2.split(src)
+    histSize = 256
+    histRange = (0, 256)  # the upper boundary is exclusive
+    accumulate = False
+    b_hist = cv2.calcHist(bgr_planes, [0], None, [histSize], histRange, accumulate=accumulate)
+    g_hist = cv2.calcHist(bgr_planes, [1], None, [histSize], histRange, accumulate=accumulate)
+    r_hist = cv2.calcHist(bgr_planes, [2], None, [histSize], histRange, accumulate=accumulate)
+    hist_h = 400
+    cv2.normalize(b_hist, b_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(g_hist, g_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(r_hist, r_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
+    return b_hist, g_hist, r_hist
+
+
+# get_mean_hist()
