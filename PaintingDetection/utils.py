@@ -3,9 +3,10 @@ import cv2
 import math
 import glob
 
+NORM_FACTOR = 50
 
-def print_rectangles_with_findContours(edged, frame):
-    b_hist, g_hist, r_hist = get_mean_hist()
+
+def print_rectangles_with_findContours(edged, frame, b_hist, g_hist, r_hist):
     contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     rects = np.ones([len(contours), ])
     bounding_boxes = []
@@ -35,12 +36,14 @@ def print_rectangles_with_findContours(edged, frame):
                             rects[i] = 0
                             break
             if rects[i] == 1:
-                b, g, r = get_hist(frame[y0:y0+h0, x0:x0+w0, :])
-                mse_b = ((b - b_hist) ** 2)
-                mse_g = ((g - g_hist) ** 2)
-                mse_r = ((r - r_hist) ** 2)
-                mean = (mse_b + mse_g + mse_r) / 3
-                if mean < 100:
+                # seleziono solo la parte interna del rettangolo così evito l'eventuale cornice che nel database non è quasi mai presente
+                y_range = [round(y0 + h0 / 5), round(y0 + h0 * 4 / 5)]
+                x_range = [round(x0 + w0 / 5), round(x0 + w0 * 4 / 5)]
+                img_for_hist = frame[y_range[0]:y_range[1], x_range[0]:x_range[1], :]
+                # cv2.imshow('rect', img_for_hist)
+                # cv2.waitKey(0)
+                b, g, r = get_hist(img_for_hist)
+                if hist_error([b, g, r], [b_hist, g_hist, r_hist]):
                     cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
                     bounding_boxes.append([x0, y0, w0, h0])
     return frame, bounding_boxes
@@ -131,28 +134,25 @@ def get_mean_hist():
         g_hist[i] = cv2.calcHist(bgr_planes, [1], None, [histSize], histRange, accumulate=accumulate)
         r_hist[i] = cv2.calcHist(bgr_planes, [2], None, [histSize], histRange, accumulate=accumulate)
     hist_w = 512
-    hist_h = 400
-    bin_w = int(np.round(hist_w / histSize))
-    histImage = np.zeros((hist_h, hist_w, 3), dtype=np.uint8)
+    # bin_w = int(np.round(hist_w / histSize))
+    # histImage = np.zeros((NORM_FACTOR, hist_w, 3), dtype=np.uint8)
     b_hist = np.mean(b_hist, axis=0)
     g_hist = np.mean(g_hist, axis=0)
     r_hist = np.mean(r_hist, axis=0)
-    cv2.normalize(b_hist, b_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
-    cv2.normalize(g_hist, g_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
-    cv2.normalize(r_hist, r_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
-    for i in range(1, histSize):
-        cv2.line(histImage, (bin_w * (i - 1), hist_h - int(np.round(b_hist[i - 1]))),
-                (bin_w * i, hist_h - int(np.round(b_hist[i]))),
-                (255, 0, 0), thickness=2)
-        cv2.line(histImage, (bin_w * (i - 1), hist_h - int(np.round(g_hist[i - 1]))),
-                (bin_w * i, hist_h - int(np.round(g_hist[i]))),
-                (0, 255, 0), thickness=2)
-        cv2.line(histImage, (bin_w * (i - 1), hist_h - int(np.round(r_hist[i - 1]))),
-                (bin_w * i, hist_h - int(np.round(r_hist[i]))),
-                (0, 0, 255), thickness=2)
+    # b_hist, g_hist, r_hist = normalize_hist(b_hist, g_hist, r_hist)
+    # for i in range(1, histSize):
+    #     cv2.line(histImage, (bin_w * (i - 1), NORM_FACTOR - int(np.round(b_hist[i - 1]))),
+    #             (bin_w * i, NORM_FACTOR - int(np.round(b_hist[i]))),
+    #             (255, 0, 0), thickness=2)
+    #     cv2.line(histImage, (bin_w * (i - 1), NORM_FACTOR - int(np.round(g_hist[i - 1]))),
+    #             (bin_w * i, NORM_FACTOR - int(np.round(g_hist[i]))),
+    #             (0, 255, 0), thickness=2)
+    #     cv2.line(histImage, (bin_w * (i - 1), NORM_FACTOR - int(np.round(r_hist[i - 1]))),
+    #             (bin_w * i, NORM_FACTOR - int(np.round(r_hist[i]))),
+    #             (0, 0, 255), thickness=2)
     # cv2.imshow('calcHist Demo', histImage)
     # cv2.waitKey()
-    return b_hist, g_hist, r_hist
+    return normalize_hist(b_hist, g_hist, r_hist)
 
 
 def get_hist(src):
@@ -166,11 +166,24 @@ def get_hist(src):
     b_hist = cv2.calcHist(bgr_planes, [0], None, [histSize], histRange, accumulate=accumulate)
     g_hist = cv2.calcHist(bgr_planes, [1], None, [histSize], histRange, accumulate=accumulate)
     r_hist = cv2.calcHist(bgr_planes, [2], None, [histSize], histRange, accumulate=accumulate)
-    hist_h = 400
-    cv2.normalize(b_hist, b_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
-    cv2.normalize(g_hist, g_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
-    cv2.normalize(r_hist, r_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
+    return normalize_hist(b_hist, g_hist, r_hist)
+
+
+def hist_error(hist1, hist2):
+    mse_b = ((hist1[0] - hist2[0]) ** 2).mean()
+    mse_g = ((hist1[1] - hist2[1]) ** 2).mean()
+    mse_r = ((hist1[2] - hist2[2]) ** 2).mean()
+    mean = (mse_b + mse_g + mse_r) / 3
+    if mean < 70:
+        return True
+    return False
+
+
+def normalize_hist(b_hist, g_hist, r_hist):
+    cv2.normalize(b_hist, b_hist, alpha=0, beta=NORM_FACTOR, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(g_hist, g_hist, alpha=0, beta=NORM_FACTOR, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(r_hist, r_hist, alpha=0, beta=NORM_FACTOR, norm_type=cv2.NORM_MINMAX)
     return b_hist, g_hist, r_hist
 
 
-# get_mean_hist()
+get_mean_hist()

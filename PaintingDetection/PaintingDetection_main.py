@@ -6,7 +6,7 @@ import numpy as np
 from cv2 import VideoWriter_fourcc
 from tkinter import messagebox, Label, Entry, Button, Tk
 from PIL import Image, ImageTk
-from utils import print_rectangles_with_findContours, method_0, method_1
+from utils import *
 
 
 class BackgroundTask:
@@ -37,8 +37,8 @@ class BackgroundTask:
             try:
                 self.__bgTask_.taskFuncPointer()(self.__bgTask_.isRunning)
             except Exception as e:
-                # messagebox.showerror("Error", repr(e))
-                pass
+                messagebox.showerror("Error", repr(e))
+                # pass
             self.__bgTask_.stop()
 
 
@@ -88,6 +88,7 @@ def tkThreadingTest():
                 return
             img = []
             counter = 0
+            b_hist, g_hist, r_hist = get_mean_hist()
             while cap.isOpened():
                 ret, frame = cap.read()
                 if ret:
@@ -96,8 +97,10 @@ def tkThreadingTest():
                     height = int(frame.shape[0] * scale_percent / 100)
                     dsize = (width, height)
 
-                    rects_0, bounding_boxes = print_rectangles_with_findContours(method_0(frame.copy()), frame.copy())
-                    rects_1, bounding_boxes = print_rectangles_with_findContours(method_1(frame.copy()), frame.copy())
+                    rects_0, bounding_boxes = print_rectangles_with_findContours(method_0(frame.copy()), frame.copy(),
+                                                                                 b_hist, g_hist, r_hist)
+                    rects_1, bounding_boxes = print_rectangles_with_findContours(method_1(frame.copy()), frame.copy(),
+                                                                                 b_hist, g_hist, r_hist)
                     # cv2.imshow('Rectangles', rects)
                     img.append(rects_0)
 
