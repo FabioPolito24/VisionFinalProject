@@ -28,16 +28,28 @@
 3. Edge finding with Canny
 4. Dilate edges to detect better contours
 5. Find contours with Opencv standard function
+6. Filter Contour to obtain only the external ones
+
+## PaintingRectification Pipeline
+1. TODO...
+
+## PaintingRetrival Pipeline
+1. TODO...
 
 ## Progect structure:
     .
     ├── PaintingDetection
-    │   ├── outputs            # Video edited with bounding box
+    │   ├── outputs            		# Video edited with bounding box
     │   │   ├── VIRB0395
-    │   │   └── ...	       # Other videos...
-    │   ├── main.py            # Main of Painting detection
-    │   ├── utils.py           # Some useful functions
-    │   ├── mainSte.py         # Main ???
+    │   │   └── ...	       		# Other videos...
+    │   ├── PaintingDetection_main.py   # Main of Painting detection
+    │   ├── detection_utils.py          # detection functions
+    │   ├── rectification_utils.py      # rectification functions
+    │   ├── retrival_utils.py         	# retrival functions
     │   └── ...
-    ├── painting_db 	       # Database of all Paintings
-    └── videos		       # Example videos ready to use
+    ├── painting_db 	       		# Database of all Paintings
+    ├── videos 	       			# Example videos ready to use
+    └── yolo		       		# YoloV3 NN used for people detection
+	├── ...            		# Core Yolo Network
+	├── people_detection.py		# Class to make inference in video frames
+	└── yolov3.weights		# Download Weights: https://pjreddie.com/media/files/yolov3.weights
