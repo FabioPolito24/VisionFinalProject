@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import math
 import glob
-import scipy.spatial.distance
 
 NORM_FACTOR = 50
 
@@ -38,15 +37,18 @@ def print_rectangles_with_findContours(edged, frame, b_hist, g_hist, r_hist):
                             break
             if rects[i] == 1:
                 # seleziono solo la parte interna del rettangolo così evito l'eventuale cornice che nel database non è quasi mai presente
-                y_range = [round(y0 + h0 / 5), round(y0 + h0 * 4 / 5)]
-                x_range = [round(x0 + w0 / 5), round(x0 + w0 * 4 / 5)]
-                img_for_hist = frame[y_range[0]:y_range[1], x_range[0]:x_range[1], :]
+                # y_range = [round(y0 + h0 / 5), round(y0 + h0 * 4 / 5)]
+                # x_range = [round(x0 + w0 / 5), round(x0 + w0 * 4 / 5)]
+                # img_for_hist = frame[y_range[0]:y_range[1], x_range[0]:x_range[1], :]
                 # cv2.imshow('rect', img_for_hist)
                 # cv2.waitKey(0)
-                b, g, r = get_hist(img_for_hist)
-                if hist_error([b, g, r], [b_hist, g_hist, r_hist]):
-                    cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
-                    bounding_boxes.append([x0, y0, w0, h0])
+                # b, g, r = get_hist(img_for_hist)
+                # if hist_error([b, g, r], [b_hist, g_hist, r_hist]):
+                #     cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
+                #     bounding_boxes.append([x0, y0, w0, h0])
+                cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
+                bounding_boxes.append([x0, y0, w0, h0])
+
     return frame, bounding_boxes
 
 
@@ -112,17 +114,19 @@ def method_1(frame):
 def read_all_paintings():
     images = glob.glob("../paintings_db/*.png")
     paintings = []
+    ids = []
     for image in images:
         img = cv2.imread(image)
         paintings.append(img)
+        ids.append(image)
     # for i, img in enumerate(paintings):
     #     cv2.imshow("Image", img)
     #     cv2.waitKey(0)
-    return paintings
+    return paintings, ids
 
 
 def get_mean_hist():
-    imgs = read_all_paintings()
+    imgs, _ = read_all_paintings()
     histSize = 256
     histRange = (0, 256)  # the upper boundary is exclusive
     b_hist = np.zeros((len(imgs), 256, 1))
@@ -188,133 +192,3 @@ def normalize_hist(b_hist, g_hist, r_hist):
 
 
 get_mean_hist()
-
-# Reorder the points in the correct way
-def reorder(points):
-    ordered_points = np.zeros((4, 2), np.int32)
-    add = points.sum(1)
-    ordered_points[0] = points[np.argmin(add)]
-    ordered_points[3] = points[np.argmax(add)]
-    diff = np.diff(points, axis=1)
-    ordered_points[1] = points[np.argmin(diff)]
-    ordered_points[2] = points[np.argmax(diff)]
-    return ordered_points
-
-
-# Straighten the painting given his contour, the contour has to be a quadrilateral
-def rectify(frame, contour):
-    # getting the 4 vertices
-    epsilon = 0.08 * cv2.arcLength(contour, True)
-    approx = cv2.approxPolyDP(contour, epsilon, True)
-
-    # contours print on the frame
-    # cv2.drawContours(frame, approx, -1, (0, 0, 255), 50)
-    # cv2.drawContours(frame, contour, -1, (0, 255, 0), 5)
-
-    if len(approx) == 4:
-        (rows, cols, _) = frame.shape
-
-        # image center
-        u0 = cols / 2.0
-        v0 = rows / 2.0
-
-        p = reorder(approx.reshape((4, 2)))
-
-        # widths and heights of the projected image
-        # if one of the following value is zero it throws an error, but if this happens
-        # it means that the shape that the algorithm has found is not a square
-        w1 = scipy.spatial.distance.euclidean(p[0], p[1])
-        w2 = scipy.spatial.distance.euclidean(p[2], p[3])
-
-        h1 = scipy.spatial.distance.euclidean(p[0], p[2])
-        h2 = scipy.spatial.distance.euclidean(p[1], p[3])
-
-        # plt.imshow(cv2.cvtColor(img3, cv2.COLOR_BGR2RGB))
-        # plt.show()
-
-        w = max(w1, w2)
-        h = max(h1, h2)
-
-        # visible aspect ratio
-        ar_vis = float(w) / float(h)
-
-        # make numpy arrays and append 1 for linear algebra
-        m1 = np.array((p[0][0], p[0][1], 1)).astype('float32')
-        m2 = np.array((p[1][0], p[1][1], 1)).astype('float32')
-        m3 = np.array((p[2][0], p[2][1], 1)).astype('float32')
-        m4 = np.array((p[3][0], p[3][1], 1)).astype('float32')
-
-        # calculate the focal disrance
-        k2 = np.dot(np.cross(m1, m4), m3) / np.dot(np.cross(m2, m4), m3)
-        k3 = np.dot(np.cross(m1, m4), m2) / np.dot(np.cross(m3, m4), m2)
-
-        n2 = k2 * m2 - m1
-        n3 = k3 * m3 - m1
-
-        n21 = n2[0]
-        n22 = n2[1]
-        n23 = n2[2]
-
-        n31 = n3[0]
-        n32 = n3[1]
-        n33 = n3[2]
-
-        f = math.sqrt(np.abs((1.0 / (n23 * n33)) * (
-                (n21 * n31 - (n21 * n33 + n23 * n31) * u0 + n23 * n33 * u0 * u0) + (
-                n22 * n32 - (n22 * n33 + n23 * n32) * v0 + n23 * n33 * v0 * v0))))
-
-        A = np.array([[f, 0, u0], [0, f, v0], [0, 0, 1]]).astype('float32')
-
-        At = np.transpose(A)
-        Ati = np.linalg.inv(At)
-        Ai = np.linalg.inv(A)
-
-        # calculate the real aspect ratio
-        ar_real = math.sqrt(
-            np.dot(np.dot(np.dot(n2, Ati), Ai), n2) / np.dot(np.dot(np.dot(n3, Ati), Ai), n3))
-
-        if ar_real < ar_vis:
-            W = int(w)
-            H = int(W / ar_real)
-        else:
-            H = int(h)
-            W = int(ar_real * H)
-
-        pts1 = np.array(p).astype('float32')
-        pts2 = np.float32([[0, 0], [W, 0], [0, H], [W, H]])
-
-        # project the image with the new w/h
-        # M = cv2.getPerspectiveTransform(pts1, pts2)
-        #
-        # im_c = cv2.warpPerspective(frame, M, (W, H))
-
-        h, _ = cv2.findHomography(pts2, pts1)
-        im_c = cv2.warpPerspective(frame, h, (W, H), flags=cv2.WARP_INVERSE_MAP)
-
-        return im_c
-
-
-# Match the features between two images using ORB and return the image showing that
-def orb_features_matching(im, im_db):
-    orb = cv2.ORB_create()
-    kp1, des1 = orb.detectAndCompute(im, None)
-    kp2, des2 = orb.detectAndCompute(im_db, None)
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-    matches = bf.match(des1, des2)
-    matches = sorted(matches, key=lambda x: x.distance)
-    im_match = cv2.drawMatches(im, kp1, im_db, kp2, matches[:20], None,
-                               flags=cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
-    return im_match
-
-
-# Match the features between two images using AKAZE and return the image showing that
-def akaze_features_matching(im, im_db):
-    akaze = cv2.AKAZE_create()
-    kpts1, desc1 = akaze.detectAndCompute(im, None)
-    kpts2, desc2 = akaze.detectAndCompute(im_db, None)
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-    matches = bf.match(desc1, desc2)
-    matches = sorted(matches, key=lambda x: x.distance)
-    im_match = cv2.drawMatches(im, kpts1, im_db, kpts2, matches[:20], None,
-                               flags=cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
-    return im_match

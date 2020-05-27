@@ -7,6 +7,7 @@ from cv2 import VideoWriter_fourcc
 from tkinter import messagebox, Label, Entry, Button, Tk, PhotoImage
 from PIL import Image, ImageTk
 from utils import *
+from retrieval import magic
 
 
 class BackgroundTask:
@@ -97,22 +98,22 @@ def tkThreadingTest():
                     height = int(frame.shape[0] * scale_percent / 100)
                     dsize = (width, height)
 
-                    rects_0, bounding_boxes = print_rectangles_with_findContours(method_0(frame.copy()), frame.copy(),
+                    rects_0, bounding_boxes0 = print_rectangles_with_findContours(method_0(frame.copy()), frame.copy(),
                                                                                  b_hist, g_hist, r_hist)
-                    rects_1, bounding_boxes = print_rectangles_with_findContours(method_1(frame.copy()), frame.copy(),
+                    rects_1, bounding_boxes1 = print_rectangles_with_findContours(method_1(frame.copy()), frame.copy(),
                                                                                  b_hist, g_hist, r_hist)
+
+                    for rect in bounding_boxes0:
+                        x0, y0, w0, h0 = rect
+                        magic(frame[y0:y0 + h0, x0:x0 + w0, :])
+
                     # cv2.imshow('Rectangles', rects)
                     img.append(rects_0)
 
                     self.print_on_GUI(rects_0, self.rects_label_0, dsize)
                     self.print_on_GUI(rects_1, self.rects_label_1, dsize)
 
-                    for i, box in enumerate(bounding_boxes):
-                        box_string = ""
-                        for j in range(3):
-                            box_string += str(box[j]) + ","
-                        box_string += str(box[3])
-                        file.write(str(counter) + "," + str(i) + "," + box_string + "\n")
+
                     # if cv2.waitKey(25) & 0xFF == ord('q'):
                     #     break
                     # sleep because otherwise frames are displayed too rapidly
@@ -121,17 +122,6 @@ def tkThreadingTest():
 
                 else:
                     break
-
-            try:
-                height, width, layers = img[1].shape
-                fourcc = VideoWriter_fourcc(*'MP42')
-                video = cv2.VideoWriter(folder_name + "/video.avi", fourcc, 24, (width, height))
-                for j in range(len(img)):
-                    video.write(img[j])
-                video.release()
-            except:
-                print('Video build failed')
-
             cap.release()
             cv2.destroyAllWindows()
             file.close()
@@ -139,7 +129,6 @@ def tkThreadingTest():
             self.rects_label_0.image = ""
             self.rects_label_1.configure(image="")
             self.rects_label_1.image = ""
-            messagebox.showinfo("Info", "Video and csv file saved at location ./" + folder_name)
 
         def print_on_GUI(self, rects, label, dsize):
             rects = cv2.cvtColor(rects, cv2.COLOR_BGR2RGB)
