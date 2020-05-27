@@ -17,7 +17,6 @@ import random
 def arg_parse():
     """
     Parse arguements to the detect module
-    
     """
     
     parser = argparse.ArgumentParser(description='YOLO v3 Detection Module')
@@ -125,7 +124,7 @@ for i, batch in enumerate(im_batches):
     end = time.time()
 
     if type(prediction) == int:
-
+        #Prediction int == no Class founded
         for im_num, image in enumerate(imlist[i*batch_size: min((i +  1)*batch_size, len(imlist))]):
             im_id = i*batch_size + im_num
             print("{0:20s} predicted in {1:6.3f} seconds".format(image.split("/")[-1], (end - start)/batch_size))
@@ -140,6 +139,9 @@ for i, batch in enumerate(im_batches):
         write = 1
     else:
         output = torch.cat((output,prediction))
+
+    print("classes predicted")
+    print(prediction[0,:])
 
     for im_num, image in enumerate(imlist[i*batch_size: min((i +  1)*batch_size, len(imlist))]):
         im_id = i*batch_size + im_num

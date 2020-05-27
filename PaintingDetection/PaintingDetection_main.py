@@ -6,7 +6,9 @@ import numpy as np
 from cv2 import VideoWriter_fourcc
 from tkinter import messagebox, Label, Entry, Button, Tk, PhotoImage
 from PIL import Image, ImageTk
-from utils import *
+from detection_utils import *
+from histogram_utils import *
+from retrival_utils import *
 
 
 class BackgroundTask:

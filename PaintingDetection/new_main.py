@@ -6,8 +6,9 @@ import numpy as np
 from cv2 import VideoWriter_fourcc
 from tkinter import messagebox, Label, Entry, Button, Tk, PhotoImage
 from PIL import Image, ImageTk
-from utils import *
-from retrieval import magic
+from histogram_utils import *
+from retrival_utils import magic
+from detection_utils import print_rectangles_with_findContours
 
 
 class BackgroundTask:

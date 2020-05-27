@@ -8,6 +8,12 @@ __pycache__/
 # C extensions
 *.so
 
+# Our Outputs
+*/outputs/
+
+#yolo weight too big for github
+*.weights
+
 # Distribution / packaging
 .Python
 env/
