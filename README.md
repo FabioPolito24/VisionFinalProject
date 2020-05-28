@@ -36,12 +36,18 @@
 ## PaintingRetrival Pipeline
 1. TODO...
 
+## People Detection Pipeline
+1. Detection made with YoloV3
+How to add it to the project:
+- Include Yolo/people_detector.py in yout project
+- Initialize (once) the network: detector = PeopleDetector()
+- To detect people call method passing a simple frame from videocapture frame: det.detectPeopleFromFrame(frame)
+
 ## Progect structure:
     .
     ├── PaintingDetection
     │   ├── outputs            		# Video edited with bounding box
-    │   │   ├── VIRB0395
-    │   │   └── ...	       		# Other videos...
+    │   │   └── ...	       		# videos...
     │   ├── PaintingDetection_main.py   # Main of Painting detection
     │   ├── detection_utils.py          # detection functions
     │   ├── rectification_utils.py      # rectification functions
@@ -50,6 +56,7 @@
     ├── painting_db 	       		# Database of all Paintings
     ├── videos 	       			# Example videos ready to use
     └── yolo		       		# YoloV3 NN used for people detection
-	├── ...            		# Core Yolo Network
-	├── people_detection.py		# Class to make inference in video frames
+	├── ...            		# Other utilities for yolo
+	├── util.py			# Some methods usefull
+	├── people_detector.py		# Class to make inference in video frames
 	└── yolov3.weights		# Download Weights: https://pjreddie.com/media/files/yolov3.weights
