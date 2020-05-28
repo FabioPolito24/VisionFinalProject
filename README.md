@@ -37,11 +37,12 @@
 1. TODO...
 
 ## People Detection Pipeline
-1. Detection made with YoloV3
+1. Detection made with YoloV3 trained on COCO dataset.
+
 How to add it to the project:
 - Include Yolo/people_detector.py in yout project
 - Initialize (once) the network: detector = PeopleDetector()
-- To detect people call method passing a simple frame from videocapture frame: det.detectPeopleFromFrame(frame)
+- To detect people call method passing a simple frame from videocapture frame: detector.detectPeopleFromFrame(frame)
 
 ## Progect structure:
     .
@@ -56,7 +57,7 @@ How to add it to the project:
     ├── painting_db 	       		# Database of all Paintings
     ├── videos 	       			# Example videos ready to use
     └── yolo		       		# YoloV3 NN used for people detection
-	├── ...            		# Other utilities for yolo
-	├── util.py			# Some methods usefull
-	├── people_detector.py		# Class to make inference in video frames
-	└── yolov3.weights		# Download Weights: https://pjreddie.com/media/files/yolov3.weights
+        ├── ...            		# Other utilities for yolo
+        ├── util.py			# Some methods usefull
+        ├── people_detector.py		# Class to make inference in video frames
+        └── yolov3.weights		# Download Weights: https://pjreddie.com/media/files/yolov3.weights
