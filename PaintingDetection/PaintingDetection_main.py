@@ -7,7 +7,11 @@ from cv2 import VideoWriter_fourcc
 from tkinter import messagebox, Label, Entry, Button, Tk, PhotoImage
 from PIL import Image, ImageTk
 from detection_utils import *
+<<<<<<< HEAD
 from histogram_utils import *
+=======
+from rectification_utils import *
+>>>>>>> 4b8c6adf17163d9a582e314f2036f17a1f905b22
 from retrival_utils import *
 
 

@@ -4,7 +4,10 @@ import math
 import glob
 import scipy.spatial.distance
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4b8c6adf17163d9a582e314f2036f17a1f905b22
 def houghLines(edged):
     lines = cv2.HoughLines(edged, 1, np.pi / 180, 50, None, 0, 0)
     # Draw the lines
