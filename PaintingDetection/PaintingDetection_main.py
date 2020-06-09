@@ -4,14 +4,10 @@ import time
 import os
 import numpy as np
 from cv2 import VideoWriter_fourcc
-from tkinter import messagebox, Label, Entry, Button, Tk, PhotoImage
+from tkinter import messagebox, Label, Entry, Button, Tk
 from PIL import Image, ImageTk
 from detection_utils import *
-<<<<<<< HEAD
-from histogram_utils import *
-=======
 from rectification_utils import *
->>>>>>> 4b8c6adf17163d9a582e314f2036f17a1f905b22
 from retrival_utils import *
 
 
@@ -40,11 +36,11 @@ class BackgroundTask:
             self.__bgTask_ = bgTask
 
         def run(self):
-            # try:
-            self.__bgTask_.taskFuncPointer()(self.__bgTask_.isRunning)
-            # except Exception as e:
-            #     messagebox.showerror("Error", repr(e))
-            #     # pass
+            try:
+                self.__bgTask_.taskFuncPointer()(self.__bgTask_.isRunning)
+            except Exception as e:
+                messagebox.showerror("Error", repr(e))
+                # pass
             self.__bgTask_.stop()
 
 
