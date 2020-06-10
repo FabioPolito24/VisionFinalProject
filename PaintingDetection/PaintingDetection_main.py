@@ -90,36 +90,41 @@ def tkThreadingTest():
                 return
             img = []
             counter = 0
-            b_hist, g_hist, r_hist = get_mean_hist()
+            # b_hist, g_hist, r_hist = get_mean_hist()
+            skip = 4
+            # count = 0
             while cap.isOpened():
                 ret, frame = cap.read()
                 if ret:
-                    scale_percent = 30
-                    width = int(frame.shape[1] * scale_percent / 100)
-                    height = int(frame.shape[0] * scale_percent / 100)
-                    dsize = (width, height)
+                    skip -= 1
+                    if skip == 0:
+                        skip = 4
+                        scale_percent = 30
+                        width = int(frame.shape[1] * scale_percent / 100)
+                        height = int(frame.shape[0] * scale_percent / 100)
+                        dsize = (width, height)
 
-                    rects_0, bounding_boxes = print_rectangles_with_findContours(method_0(frame.copy()), frame.copy(),
-                                                                                 b_hist, g_hist, r_hist)
-                    rects_1, bounding_boxes = print_rectangles_with_findContours(method_1(frame.copy()), frame.copy(),
-                                                                                 b_hist, g_hist, r_hist)
-                    # cv2.imshow('Rectangles', rects)
-                    img.append(rects_0)
+                        # rects_0, bounding_boxes = print_rectangles_with_findContours(method_0(frame.copy()), frame.copy())
+                        rects_1, bounding_boxes = print_rectangles_with_findContours(method_1(frame.copy()), frame.copy())
+                        # count += 1
+                        # cv2.imshow('Rectangles', rects)
+                        img.append(rects_1)
 
-                    self.print_on_GUI(rects_0, self.rects_label_0, dsize)
-                    self.print_on_GUI(rects_1, self.rects_label_1, dsize)
+                        # self.print_on_GUI(rects_0, self.rects_label_0, dsize)
+                        self.print_on_GUI(rects_1, self.rects_label_1, dsize)
 
-                    for i, box in enumerate(bounding_boxes):
-                        box_string = ""
-                        for j in range(3):
-                            box_string += str(box[j]) + ","
-                        box_string += str(box[3])
-                        file.write(str(counter) + "," + str(i) + "," + box_string + "\n")
-                    # if cv2.waitKey(25) & 0xFF == ord('q'):
-                    #     break
-                    # sleep because otherwise frames are displayed too rapidly
-                    # time.sleep(0.02)
-                    counter += 1
+                        for i, box in enumerate(bounding_boxes):
+                            box_string = ""
+                            for j in range(3):
+                                box_string += str(box[j]) + ","
+                            box_string += str(box[3])
+                            file.write(str(counter) + "," + str(i) + "," + box_string + "\n")
+
+                        # if cv2.waitKey(25) & 0xFF == ord('q'):
+                        #     break
+                        # sleep because otherwise frames are displayed too rapidly
+                        # time.sleep(0.02)
+                        counter += 1
 
                 else:
                     break
