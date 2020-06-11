@@ -110,14 +110,11 @@ def second_step(img):
     cv2.waitKey()
     # find the contours in the edged image, keeping only the
     # largest ones, and initialize the screen contour
-    cnts = cv2.findContours(hsv_gray.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
 
     # loop over the contours
     for c in cnts:
-        if cv2.contourArea(c) < 45000:
-            continue
         # approximate the contour
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
@@ -128,82 +125,67 @@ def second_step(img):
             cv2.drawContours(canvas, [approx], -1, (255, 255, 255), 1)
             cv2.imshow("Outline before houghLines", canvas[:, :, 0])
             cv2.waitKey(0)
-            if len(approx) == 4:
-                screenCnt = approx
-                break
+            ret = houghLines(canvas[:, :, 0])
+            cv2.imshow("Outline", ret)
+            cv2.waitKey(0)
 
+            contours, _ = cv2.findContours(ret.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            contours = imutils.grab_contours(contours)
+            contours = sorted(contours, key=cv2.contourArea, reverse=True)[:5]
+            for c1 in contours:
+                # approximate the contour
+                peri1 = cv2.arcLength(c1, True)
+                approx1 = cv2.approxPolyDP(c1, 0.02 * peri1, True)
 
+                # if our approximated contour has four points, then we
+                # can assume that we have found our screen
+                if len(approx1) == 4:
+                    screenCnt1 = approx1
+                    break
+            print("STEP 2: Find contours of paper")
+            cv2.drawContours(img, [screenCnt1], -1, (0, 255, 0), 2)
+            cv2.imshow("Outline", img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
-            # ret = houghLines(canvas[:, :, 0])
-            # cv2.imshow("Outline", ret)
-            # cv2.waitKey(0)
-
-            # contours = cv2.findContours(ret.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-            # contours = imutils.grab_contours(contours)
-            # contours = sorted(contours, key=cv2.contourArea, reverse=True)[:20]
-            # for i, c1 in enumerate(contours):
-            #     # approximate the contour
-            #     peri1 = cv2.arcLength(c1, True)
-            #     approx1 = cv2.approxPolyDP(c1, 0.02 * peri1, True)
-            #     my_canvas = black_img.copy()
-            #     cv2.drawContours(my_canvas, [approx], -1, (0, 255, 0), 1)
-            #     cv2.imshow('c'+str(i), my_canvas)
-            #     cv2.waitKey(0)
-            #     # if our approximated contour has four points, then we
-            #     # can assume that we have found our screen
-            #     if len(approx1) == 4:
-            #         screenCnt1 = approx1
-            #         break
-            # cv2.destroyAllWindows()
-            # print("STEP 2: Find contours of paper")
-            # cv2.drawContours(img, [screenCnt1], -1, (0, 255, 0), 2)
-            # cv2.imshow("Outline", img)
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows()
-
-            #
-            #
-            # print("Score: ", np.mean(hsv_gray[y:y+h, x:x+w]))
-            # print("Mean hsv 2: ", np.mean(hsv[:, :, 2]))
-            # print("Std hsv 2: ", np.std(hsv[:, :, 2]))
-            # keypoints = np.zeros([4, 2])
-            # keypoints[0] = [x, y]
-            # keypoints[1] = [x + w, y]
-            # keypoints[2] = [x, y + h]
-            # keypoints[3] = [x + w, y + h]
-            # # non va perchè i punti che dò in input non sono punti del quadro distorto ma un bb con già i lati paralleli
-            # warped = four_point_transform(orig[y:y + h, x:x + w, :], keypoints * ratio)
-            # # show the original and rectified images
-            # print("STEP 3: Apply perspective transform")
-            # cv2.imshow("Original", imutils.resize(orig, height=500))
-            # cv2.imshow("Warped", imutils.resize(warped, height=500))
-            # cv2.waitKey(0)
+            print("Score: ", np.mean(hsv_gray[y:y+h, x:x+w]))
+            print("Mean hsv 2: ", np.mean(hsv[:, :, 2]))
+            print("Std hsv 2: ", np.std(hsv[:, :, 2]))
+            keypoints = np.zeros([4, 2])
+            keypoints[0] = [x, y]
+            keypoints[1] = [x + w, y]
+            keypoints[2] = [x, y + h]
+            keypoints[3] = [x + w, y + h]
+            # non va perchè i punti che dò in input non sono punti del quadro distorto ma un bb con già i lati paralleli
+            warped = four_point_transform(orig[y:y + h, x:x + w, :], keypoints * ratio)
+            # show the original and rectified images
+            print("STEP 3: Apply perspective transform")
+            cv2.imshow("Original", imutils.resize(orig, height=500))
+            cv2.imshow("Warped", imutils.resize(warped, height=500))
+            cv2.waitKey(0)
         except Exception as e:
             print(e)
         # if our approximated contour has four points, then we
         # can assume that we have found our screen
-        # if len(approx) == 4:
-        #     screenCnt = approx
-        #     break
-    try:
-        # show the contour (outline) of the piece of paper
-        print("STEP 2: Find contours of paper")
-        cv2.drawContours(img, [screenCnt], -1, (0, 255, 0), 2)
-        cv2.imshow("Outline", img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        # apply the four point transform to obtain a top-down
-        # view of the original image
-        keypoints = screenCnt.reshape(4, 2)
-        # keypoints = [[x,y], [x+w,y], [x,y+h], [x+w,y+h]]
-        warped = four_point_transform(orig, keypoints * ratio)
-        # show the original and rectified images
-        print("STEP 3: Apply perspective transform")
-        cv2.imshow("Original", imutils.resize(orig, height=500))
-        cv2.imshow("Warped", imutils.resize(warped, height=500))
-        cv2.waitKey(0)
-    except:
-        pass
+        if len(approx) == 4:
+            screenCnt = approx
+            break
+    # show the contour (outline) of the piece of paper
+    print("STEP 2: Find contours of paper")
+    cv2.drawContours(img, [screenCnt], -1, (0, 255, 0), 2)
+    cv2.imshow("Outline", img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    # apply the four point transform to obtain a top-down
+    # view of the original image
+    # keypoints = screenCnt.reshape(4, 2)
+    keypoints = [[x,y], [x+w,y], [x,y+h], [x+w,y+h]]
+    warped = four_point_transform(orig, keypoints * ratio)
+    # show the original and rectified images
+    print("STEP 3: Apply perspective transform")
+    cv2.imshow("Original", imutils.resize(orig, height=500))
+    cv2.imshow("Warped", imutils.resize(warped, height=500))
+    cv2.waitKey(0)
     return True, (0, 0, 0, 0)
 
 
@@ -211,7 +193,6 @@ def enlight(rgb_img):
     cv2.imshow('Original', rgb_img)
     hsv = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2HSV)
     hsv[:, :, 2] += LIGHT_FACTOR
-    # final image has still problems even after clip, I don't know why
     hsv[:, :, 0] = np.clip(hsv[:, :, 0], 0, 179)
     hsv[:, :, 1:] = np.clip(hsv[:, :, 1:], 0, 255)
     rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
@@ -348,3 +329,4 @@ def isolate_painting(frame):
     upper_frame_color = np.array([110, 143, 171])
     mask = cv2.inRange(hsv, lower_frame_color, upper_frame_color)
     return mask
+
