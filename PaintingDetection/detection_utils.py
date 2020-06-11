@@ -5,9 +5,13 @@ import scipy.spatial.distance
 import matplotlib.pyplot as plt
 from retrieval_utils import orb_features_matching
 
-# from pyimagesearch.transform import four_point_transform
+from pyimagesearch.transform import four_point_transform
 from skimage.filters import threshold_local
 import imutils
+
+
+DELTA = 30
+LIGHT_FACTOR = 40
 
 
 def bb_intersection_over_union(boxA, boxB):
@@ -65,20 +69,25 @@ def print_rectangles_with_findContours(edged, frame):
                 # ret = kmeans(frame[y0:y0+h0, x0:x0+w0, :])
                 # ret = watershed(frame[y0:y0+h0, x0:x0+w0, :])
                 # (x0, y0, w0, h0) = second_step(frame[y0:y0 + h0, x0:x0 + w0, :])
-                ret, bb = second_step(frame[y0:y0 + h0, x0:x0 + w0, :])
+                ret, bb = second_step(frame[
+                                      max(0, y0-DELTA): min(frame.shape[0], y0+h0+DELTA),
+                                      max(0, x0-DELTA): min(frame.shape[1], x0+w0+DELTA),
+                                      :])
+                # ret, bb = second_step(frame[y0:y0+h0, x0:x0+w0, :])
                 if ret:
                     bounding_boxes.append(bb)
     return frame, bounding_boxes
 
 
 def second_step(img):
+    img = enlight(img)
     ratio = img.shape[0] / 500.0
     orig = img.copy()
     img = imutils.resize(img, height=500)
 
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     cv2.imshow('HSV', hsv)
-    cv2.imshow('RGB', img)
+    # cv2.imshow('RGB', img)
     rgb_gray = preprocessing(img)
     hsv_gray = preprocessing(hsv)
     # Otsu thresholding
@@ -86,9 +95,8 @@ def second_step(img):
     _, thresh2 = cv2.threshold(hsv_gray, 0, 255, cv2.THRESH_OTSU)
     rgb_gray = (rgb_gray > thresh1).astype(np.uint8) * 255
     hsv_gray = (hsv_gray > thresh2).astype(np.uint8) * 255
-    cv2.imshow('RGB_otsu', rgb_gray)
+    # cv2.imshow('RGB_otsu', rgb_gray)
     cv2.imshow('HSV_otsu_start', hsv_gray)
-
 
     contours, _ = cv2.findContours(hsv_gray.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     for contour in contours:
@@ -103,11 +111,20 @@ def second_step(img):
     cnts = cv2.findContours(hsv_gray.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
+
     # loop over the contours
     for c in cnts:
         # approximate the contour
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+        try:
+            x, y, w, h = cv2.boundingRect(c)
+            cv2.imshow('bb_cnt', img[y:y + h, x:x + w, :])
+            cv2.drawContours(img, [approx], -1, (0, 255, 0), 2)
+            cv2.imshow("Outline", img)
+            cv2.waitKey(0)
+        except:
+            pass
         # if our approximated contour has four points, then we
         # can assume that we have found our screen
         if len(approx) == 4:
@@ -121,26 +138,25 @@ def second_step(img):
     cv2.destroyAllWindows()
     # apply the four point transform to obtain a top-down
     # view of the original image
-    # warped = four_point_transform(orig, screenCnt.reshape(4, 2) * ratio)
-    # # convert the warped image to grayscale, then threshold it
-    # # to give it that 'black and white' paper effect
-    # warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
-    # T = threshold_local(warped, 11, offset=10, method="gaussian")
-    # warped = (warped > T).astype("uint8") * 255
-    # show the original and scanned images
-    # print("STEP 3: Apply perspective transform")
-    # cv2.imshow("Original", imutils.resize(orig, height=650))
-    # cv2.imshow("Scanned", imutils.resize(warped, height=650))
-    # cv2.waitKey(0)
+    warped = four_point_transform(orig, screenCnt.reshape(4, 2) * ratio)
+    # show the original and rectified images
+    print("STEP 3: Apply perspective transform")
+    cv2.imshow("Original", imutils.resize(orig, height=500))
+    cv2.imshow("Warped", imutils.resize(warped, height=500))
+    cv2.waitKey(0)
     return True, (0, 0, 0, 0)
 
 
-def isolate_painting(frame):
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    lower_frame_color = np.array([15, 19, 24])
-    upper_frame_color = np.array([110, 143, 171])
-    mask = cv2.inRange(hsv, lower_frame_color, upper_frame_color)
-    return mask
+def enlight(rgb_img):
+    cv2.imshow('Original', rgb_img)
+    hsv = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2HSV)
+    hsv[:, :, 2] += LIGHT_FACTOR
+    hsv[:, :, 0] = np.clip(hsv[:, :, 0], 0, 179)
+    hsv[:, :, 1:] = np.clip(hsv[:, :, 1:], 0, 255)
+    rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    cv2.imshow('Lighted', rgb)
+    cv2.waitKey()
+    return rgb
 
 
 def kmeans(frame):
@@ -264,3 +280,10 @@ def method_2(frame):
     edged = cv2.dilate(gray, dilate_kernel, iterations=2)
     return edged
 
+
+def isolate_painting(frame):
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    lower_frame_color = np.array([15, 19, 24])
+    upper_frame_color = np.array([110, 143, 171])
+    mask = cv2.inRange(hsv, lower_frame_color, upper_frame_color)
+    return mask
