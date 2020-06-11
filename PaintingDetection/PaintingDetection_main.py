@@ -8,7 +8,7 @@ from tkinter import messagebox, Label, Entry, Button, Tk
 from PIL import Image, ImageTk
 from detection_utils import *
 from rectification_utils import *
-from retrival_utils import *
+from retrieval_utils import *
 
 
 class BackgroundTask:
@@ -104,14 +104,18 @@ def tkThreadingTest():
                         height = int(frame.shape[0] * scale_percent / 100)
                         dsize = (width, height)
 
-                        # rects_0, bounding_boxes = print_rectangles_with_findContours(method_0(frame.copy()), frame.copy())
-                        rects_1, bounding_boxes = print_rectangles_with_findContours(method_1(frame.copy()), frame.copy())
+                        # img_0, bounding_boxes = print_rectangles_with_findContours(method_2(frame.copy()), frame.copy())
+                        # for (x0, y0, w0, h0) in bounding_boxes:
+                        #     cv2.rectangle(img_0, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
+                        img_1, bounding_boxes = print_rectangles_with_findContours(method_1(frame.copy()), frame.copy())
+                        for (x0, y0, w0, h0) in bounding_boxes:
+                            cv2.rectangle(img_1, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
                         # count += 1
                         # cv2.imshow('Rectangles', rects)
-                        img.append(rects_1)
+                        img.append(img_1)
 
-                        # self.print_on_GUI(rects_0, self.rects_label_0, dsize)
-                        self.print_on_GUI(rects_1, self.rects_label_1, dsize)
+                        # self.print_on_GUI(img_0, self.rects_label_0, dsize)
+                        self.print_on_GUI(img_1, self.rects_label_1, dsize)
 
                         for i, box in enumerate(bounding_boxes):
                             box_string = ""
