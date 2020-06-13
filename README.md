@@ -35,28 +35,23 @@
 
 ## PaintingRetrival Pipeline
 1. TODO...
-<<<<<<< HEAD
-=======
 
 ## People Detection Pipeline
 1. Detection made with YoloV3 trained on COCO dataset.
 
 How to add it to the project:
+- Download Weights: https://pjreddie.com/media/files/yolov3.weights
+- Put them in yolo/weights as yolov3.weights
 - Include Yolo/people_detector.py in yout project
 - Initialize (once) the network: detector = PeopleDetector()
 - To detect people call method passing a simple frame from videocapture frame: detector.detectPeopleFromFrame(frame)
->>>>>>> 4b8c6adf17163d9a582e314f2036f17a1f905b22
 
 ## Progect structure:
     .
     ├── PaintingDetection
     │   ├── outputs            		# Video edited with bounding box
-<<<<<<< HEAD
     │   │   ├── VIRB0395
-    │   │   └── ...	       		# Other videos...
-=======
     │   │   └── ...	       		# videos...
->>>>>>> 4b8c6adf17163d9a582e314f2036f17a1f905b22
     │   ├── PaintingDetection_main.py   # Main of Painting detection
     │   ├── detection_utils.py          # detection functions
     │   ├── rectification_utils.py      # rectification functions
@@ -65,13 +60,8 @@ How to add it to the project:
     ├── painting_db 	       		# Database of all Paintings
     ├── videos 	       			# Example videos ready to use
     └── yolo		       		# YoloV3 NN used for people detection
-<<<<<<< HEAD
-	├── ...            		# Core Yolo Network
-	├── people_detection.py		# Class to make inference in video frames
-	└── yolov3.weights		# Download Weights: https://pjreddie.com/media/files/yolov3.weights
-=======
         ├── ...            		# Other utilities for yolo
+        ├── weights			# Folder containing weights
+        │   └── yolov3.weights          # Download Weights: https://pjreddie.com/media/files/yolov3.weights
         ├── util.py			# Some methods usefull
-        ├── people_detector.py		# Class to make inference in video frames
-        └── yolov3.weights		# Download Weights: https://pjreddie.com/media/files/yolov3.weights
->>>>>>> 4b8c6adf17163d9a582e314f2036f17a1f905b22
+        └── people_detector.py		# Class to make inference in video frames

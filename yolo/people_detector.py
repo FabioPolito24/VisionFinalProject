@@ -15,21 +15,19 @@ import pandas as pd
 import random
 
 class PeopleDetector:
-    def __init__(self, ):
-        self.confidence = 0.5
-        self.nms_thesh = 0.4
+    def __init__(self, confidence = 0.5, nms_thresh = 0.4, resolution = 416, weights_path = 'weights/yolov3.weights', cfg_path = 'cfg/yolov3.cfg', num_classes = 80, names_path = 'data/coco.names'):
+        self.confidence = confidence
+        self.nms_thesh = nms_thresh
+        self.weightsfile = weights_path
+        self.cfgfile = cfg_path
         self.CUDA = torch.cuda.is_available()
-        self.weightsfile = "yolov3.weights"
-        self.cfgfile = "cfg/yolov3.cfg"
-        self.reso = 416
-        #Set up NN:
-        self.num_classes = 80
-        self.classes = load_classes("data/coco.names")
+        self.num_classes = num_classes
+        self.classes = load_classes(names_path)
         self.model = Darknet(self.cfgfile)
         self.model.load_weights(self.weightsfile)
-        print("Network successfully loaded")
-        self.model.net_info["height"] = self.reso
+        self.model.net_info["height"] = resolution
         self.inp_dim = int(self.model.net_info["height"])
+        #Check if resolution is multiple of 32
         assert self.inp_dim % 32 == 0
         assert self.inp_dim > 32
         # If there's a GPU availible, put the model on GPU
@@ -40,7 +38,7 @@ class PeopleDetector:
 
     def prep_image(self, img):
         """
-        Prepare image for inputting to the neural network.
+        Prepare image (resize) for inputting to the neural network.
         """
         orig_im = img
         dim = orig_im.shape[1], orig_im.shape[0]
@@ -49,16 +47,15 @@ class PeopleDetector:
         img_ = torch.from_numpy(img_).float().div(255.0).unsqueeze(0)
         return img_, orig_im, dim
 
-    def write(self, x, img):
+    def write(self, x, img, color = (0, 0, 255)):
         """
         Put label on top of image
+        Default label color: red
         """
         c1 = tuple(x[1:3].int())
         c2 = tuple(x[3:5].int())
         cls = int(x[-1])
         label = "{0}".format(self.classes[cls])
-        colors = pkl.load(open("pallete", "rb"))
-        color = random.choice(colors)
         cv2.rectangle(img, c1, c2, color, 1)
         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1, 1)[0]
         c2 = c1[0] + t_size[0] + 3, c1[1] + t_size[1] + 4
@@ -89,10 +86,12 @@ class PeopleDetector:
         #If we have detection mantain only people --> people id == 0
         output = output[output[:,-1] < 1]
 
+        #Resize Label according to input frame dimension
         output[:, 1:5] = torch.clamp(output[:, 1:5], 0.0, float(self.inp_dim)) / self.inp_dim
         output[:, [1, 3]] *= frame.shape[1]
         output[:, [2, 4]] *= frame.shape[0]
 
+        #Write Labels on top of original frame
         list(map(lambda x: self.write(x, orig_im), output))
 
         cv2.imshow("frame", orig_im)
