@@ -49,19 +49,19 @@ How to add it to the project:
 ## Progect structure:
     .
     ├── PaintingDetection
-    │   ├── outputs            		# Video edited with bounding box
+    │   ├── outputs                    # Video edited with bounding box
     │   │   ├── VIRB0395
-    │   │   └── ...	       		# videos...
-    │   ├── PaintingDetection_main.py   # Main of Painting detection
-    │   ├── detection_utils.py          # detection functions
-    │   ├── rectification_utils.py      # rectification functions
-    │   ├── retrival_utils.py         	# retrival functions
+    │   │   └── ...                    # videos...
+    │   ├── PaintingDetection_main.py  # Main of Painting detection
+    │   ├── detection_utils.py         # detection functions
+    │   ├── rectification_utils.py     # rectification functions
+    │   ├── retrival_utils.py          # retrival functions
     │   └── ...
-    ├── painting_db 	       		# Database of all Paintings
-    ├── videos 	       			# Example videos ready to use
-    └── yolo		       		# YoloV3 NN used for people detection
-        ├── ...            		# Other utilities for yolo
-        ├── weights			# Folder containing weights
-        │   └── yolov3.weights          # Download Weights: https://pjreddie.com/media/files/yolov3.weights
-        ├── util.py			# Some methods usefull
-        └── people_detector.py		# Class to make inference in video frames
+    ├── painting_db                    # Database of all Paintings
+    ├── videos                         # Example videos ready to use
+    └── yolo                           # YoloV3 NN used for people detection
+        ├── ...                        # Other utilities for yolo
+        ├── weights                    # Folder containing weights
+        │   └── yolov3.weights         # Download Weights: https://pjreddie.com/media/files/yolov3.weights
+        ├── util.py                    # Some methods usefull
+        └── people_detector.py         # Class to make inference in video frames
