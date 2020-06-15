@@ -1,11 +1,13 @@
 import numpy as np
 import cv2
-import math
-import glob
-import scipy.spatial.distance
-import matplotlib.pyplot as plt
+import imutils
 
-NORM_FACTOR = 50
+from rectification_utils import houghLines
+from retrieval_utils import orb_features_matching
+from pyimagesearch.transform import four_point_transform
+
+DELTA = 30
+LIGHT_FACTOR = 40
 
 
 def bb_intersection_over_union(boxA, boxB):
@@ -22,10 +24,12 @@ def bb_intersection_over_union(boxA, boxB):
     iou = interArea / float(boxArea)
     return iou
 
-def print_rectangles_with_findContours(edged, frame):
+
+def first_step(edged, frame):
     contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     rects = np.ones([len(contours), ])
     bounding_boxes = []
+    rectified_images = []
     # select only valid contours
     for i, contour in enumerate(contours):
         try:
@@ -46,65 +50,112 @@ def print_rectangles_with_findContours(edged, frame):
                     else:
                         # check if c is inside contour
                         (x1, y1, w1, h1) = cv2.boundingRect(c)
-                        # cv2.imshow("First", cv2.rectangle(frame.copy(), (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2))
-                        # cv2.waitKey()
-                        # cv2.imshow("Second", cv2.rectangle(frame.copy(), (x1, y1), (x1 + w1, y1 + h1), (0, 255, 0), 2))
-                        # cv2.waitKey()
                         if bb_intersection_over_union((x0, y0, w0, h0), (x1, y1, w1, h1)) > 0.6:
                             if w0*h0 > w1*h1:
                                 rects[j] = 0
                             else:
                                 rects[i] = 0
-                        # cv2.destroyAllWindows()
             if rects[i] == 1:
                 cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
-                bounding_boxes.append([x0, y0, w0, h0])
-    return frame, bounding_boxes
+                bounding_boxes.append((x0, y0, w0, h0))
+                ret, warped = second_step(frame[
+                                      max(0, y0-DELTA): min(frame.shape[0], y0+h0+DELTA),
+                                      max(0, x0-DELTA): min(frame.shape[1], x0+w0+DELTA),
+                                      :])
+                if warped is not None:
+                    rectified_images.append(warped)
+    return frame, bounding_boxes, rectified_images
 
 
-def isolate_painting(frame):
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    lower_frame_color = np.array([15, 19, 24])
-    upper_frame_color = np.array([110, 143, 171])
-    mask = cv2.inRange(hsv, lower_frame_color, upper_frame_color)
-    return mask
+# second step not working well if the painting doesn't have a rectangular shape
+def second_step(orig):
+    ret = False
+    orig = enlight(orig)
+    ratio = orig.shape[0] / 500.0
+    black_img = np.zeros(orig.shape)
+    img = imutils.resize(orig, height=500)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    # cv2.imshow('HSV', hsv)
+    # cv2.imshow('RGB', img)
+    # rgb_gray image has the only purpose to visualize the differences between rgb and hsv
+    # rgb_gray = preprocessing(img)
+    hsv_gray = preprocessing(hsv)
+    # Otsu thresholding
+    # _, thresh1 = cv2.threshold(rgb_gray, 0, 255, cv2.THRESH_OTSU)
+    _, thresh = cv2.threshold(hsv_gray, 0, 255, cv2.THRESH_OTSU)
+    # rgb_gray = (rgb_gray > thresh1).astype(np.uint8) * 255
+    hsv_gray = (hsv_gray > thresh).astype(np.uint8) * 255
+    # cv2.imshow('RGB_otsu', rgb_gray)
+    # cv2.imshow('HSV_otsu_start', hsv_gray)
+
+    # sometimes the background has been filled with 255 and the painting with 0
+    # the following code make sure that the background is filled with 0,
+    # otherwise findCountours will not work well
+    cnts, _ = cv2.findContours(hsv_gray.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    for contour in cnts:
+        bb = cv2.boundingRect(contour)
+        if bb == (0, 0, img.shape[1], img.shape[0]):
+            hsv_gray = (hsv_gray < thresh).astype(np.uint8) * 255
+            break
+    # cv2.imshow('HSV_otsu_end', hsv_gray)
+    # cv2.waitKey()
+    # find the contours in the edged image, keeping only the
+    # largest ones, and initialize the screen contour
+    cnts = cv2.findContours(hsv_gray.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:10]
+
+    # loop over the contours
+    for c in cnts:
+        if cv2.contourArea(c) < 45000:
+            continue
+        # approximate the contour
+        peri = cv2.arcLength(c, True)
+        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+        x, y, w, h = cv2.boundingRect(c)
+        # cv2.imshow('bb_cnt', img[y:y + h, x:x + w, :])
+        # ToDo: call orb feature matching with img[y:y + h, x:x + w, :] as input
+        # uncomment the following lines if you want to visualize the contours
+        # canvas = black_img.copy()
+        # cv2.drawContours(canvas, [approx], -1, (255, 255, 255), 1)
+        # cv2.imshow("Outline only", canvas[:, :, 0])
+        # cv2.waitKey(0)
+        # if our approximated contour has four points, then we
+        # can assume that we have found our painting
+        if len(approx) == 4:
+            ret = True
+            screenCnt = approx
+            break
+    try:
+        # show the contour (outline) of the painting
+        cv2.drawContours(img, [screenCnt], -1, (0, 255, 0), 2)
+        # cv2.imshow("Outline", img)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+        # apply the four point transform to obtain a top-down view of the painting
+        keypoints = screenCnt.reshape(4, 2)
+        warped = four_point_transform(orig, keypoints * ratio)
+        # show both original and rectified images
+        # cv2.imshow("Original", imutils.resize(orig, height=500))
+        # cv2.imshow("Warped", imutils.resize(warped, height=500))
+        # cv2.waitKey(0)
+    except:
+        ret = False
+    try:
+        return ret, warped
+    except:
+        return ret, None
 
 
-def kmeans(frame):
-    image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    # reshape the image to a 2D array of pixels and 3 color values (RGB)
-    pixel_values = image.reshape((-1, 3))
-    # convert to float
-    pixel_values = np.float32(pixel_values)
-    # define stopping criteria
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2)
-    # number of clusters (K)
-    k = 4  # one for background and one for paintings (also one for paintings' frames?)
-    _, labels, (centers) = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-    # convert back to 8 bit values
-    centers = np.uint8(centers)
-    # flatten the labels array
-    labels = labels.flatten()
-    # convert all pixels to the color of the centroids
-    segmented_image = centers[labels.flatten()]
-    # reshape back to the original image dimension
-    segmented_image = segmented_image.reshape(image.shape)
-    # show the image
-    plt.imshow(segmented_image)
-    plt.show()
-    # # disable only the cluster number 1 (turn the pixel into black)
-    # masked_image = np.copy(image)
-    # # convert to the shape of a vector of pixel values
-    # masked_image = masked_image.reshape((-1, 3))
-    # # color (i.e cluster) to disable
-    # cluster = 1
-    # masked_image[labels == cluster] = [0, 0, 0]
-    # # convert back to original shape
-    # masked_image = masked_image.reshape(image.shape)
-    # # show the image
-    # plt.imshow(masked_image)
-    # plt.show()
-    return segmented_image
+def enlight(rgb_img):
+    # cv2.imshow('Original', rgb_img)
+    rgb = rgb_img.astype(np.uint16)
+    rgb[:, :, :] += LIGHT_FACTOR
+    rgb = np.clip(rgb, 0, 255)
+    rgb = rgb.astype(np.uint8)
+    # cv2.imshow('Lighted', rgb)
+    # cv2.waitKey()
+    return rgb
 
 
 def preprocessing(frame):
@@ -134,6 +185,24 @@ def method_1(frame):
     # Otsu thresholding
     _, thresh1 = cv2.threshold(gray, 120, 255, cv2.THRESH_OTSU)
     gray = (gray > thresh1).astype(np.uint8) * 255
+    # cv2.imshow('rgb_hsv', gray)
+
+    # dilate borders
+    dilate_kernel = np.ones((5, 5), np.uint8)
+    edged = cv2.dilate(gray, dilate_kernel, iterations=2)
+    return edged
+
+
+# very good in some situations but bad in others
+# method 1 is more stable
+def method_2(frame):
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    gray = preprocessing(hsv)
+    # Otsu thresholding
+    _, thresh1 = cv2.threshold(gray, 120, 255, cv2.THRESH_OTSU)
+    gray = (gray < thresh1).astype(np.uint8) * 255
+    # cv2.imshow('gray_hsv', gray)
+    # cv2.waitKey()
     # ret = kmeans(img)
 
     # dilate borders
@@ -141,75 +210,10 @@ def method_1(frame):
     edged = cv2.dilate(gray, dilate_kernel, iterations=2)
     return edged
 
-def normalize_hist(b_hist, g_hist, r_hist):
-    cv2.normalize(b_hist, b_hist, alpha=0, beta=NORM_FACTOR, norm_type=cv2.NORM_MINMAX)
-    cv2.normalize(g_hist, g_hist, alpha=0, beta=NORM_FACTOR, norm_type=cv2.NORM_MINMAX)
-    cv2.normalize(r_hist, r_hist, alpha=0, beta=NORM_FACTOR, norm_type=cv2.NORM_MINMAX)
-    return b_hist, g_hist, r_hist
 
-def get_hist(src):
-    if src is None:
-        print('Could not open or find the image')
-        exit(0)
-    bgr_planes = cv2.split(src)
-    histSize = 256
-    histRange = (0, 256)  # the upper boundary is exclusive
-    accumulate = False
-    b_hist = cv2.calcHist(bgr_planes, [0], None, [histSize], histRange, accumulate=accumulate)
-    g_hist = cv2.calcHist(bgr_planes, [1], None, [histSize], histRange, accumulate=accumulate)
-    r_hist = cv2.calcHist(bgr_planes, [2], None, [histSize], histRange, accumulate=accumulate)
-    return normalize_hist(b_hist, g_hist, r_hist)
-
-def get_mean_hist():
-    imgs = read_all_paintings()
-    histSize = 256
-    histRange = (0, 256)  # the upper boundary is exclusive
-    b_hist = np.zeros((len(imgs), 256, 1))
-    g_hist = np.zeros((len(imgs), 256, 1))
-    r_hist = np.zeros((len(imgs), 256, 1))
-    accumulate = False
-    for i, src in enumerate(imgs):
-        bgr_planes = cv2.split(src)
-        b_hist[i] = cv2.calcHist(bgr_planes, [0], None, [histSize], histRange, accumulate=accumulate)
-        g_hist[i] = cv2.calcHist(bgr_planes, [1], None, [histSize], histRange, accumulate=accumulate)
-        r_hist[i] = cv2.calcHist(bgr_planes, [2], None, [histSize], histRange, accumulate=accumulate)
-    hist_w = 512
-    # bin_w = int(np.round(hist_w / histSize))
-    # histImage = np.zeros((NORM_FACTOR, hist_w, 3), dtype=np.uint8)
-    b_hist = np.mean(b_hist, axis=0)
-    g_hist = np.mean(g_hist, axis=0)
-    r_hist = np.mean(r_hist, axis=0)
-    # b_hist, g_hist, r_hist = normalize_hist(b_hist, g_hist, r_hist)
-    # for i in range(1, histSize):
-    #     cv2.line(histImage, (bin_w * (i - 1), NORM_FACTOR - int(np.round(b_hist[i - 1]))),
-    #             (bin_w * i, NORM_FACTOR - int(np.round(b_hist[i]))),
-    #             (255, 0, 0), thickness=2)
-    #     cv2.line(histImage, (bin_w * (i - 1), NORM_FACTOR - int(np.round(g_hist[i - 1]))),
-    #             (bin_w * i, NORM_FACTOR - int(np.round(g_hist[i]))),
-    #             (0, 255, 0), thickness=2)
-    #     cv2.line(histImage, (bin_w * (i - 1), NORM_FACTOR - int(np.round(r_hist[i - 1]))),
-    #             (bin_w * i, NORM_FACTOR - int(np.round(r_hist[i]))),
-    #             (0, 0, 255), thickness=2)
-    # cv2.imshow('calcHist Demo', histImage)
-    # cv2.waitKey()
-    return normalize_hist(b_hist, g_hist, r_hist)
-
-def hist_error(hist1, hist2):
-    mse_b = ((hist1[0] - hist2[0]) ** 2).mean()
-    mse_g = ((hist1[1] - hist2[1]) ** 2).mean()
-    mse_r = ((hist1[2] - hist2[2]) ** 2).mean()
-    mean = (mse_b + mse_g + mse_r) / 3
-    if mean < 70:
-        return True
-    return False
-
-def read_all_paintings():
-    images = glob.glob("../paintings_db/*.png")
-    paintings = []
-    for image in images:
-        img = cv2.imread(image)
-        paintings.append(img)
-    # for i, img in enumerate(paintings):
-    #     cv2.imshow("Image", img)
-    #     cv2.waitKey(0)
-    return paintings
+def isolate_painting(frame):
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    lower_frame_color = np.array([15, 19, 24])
+    upper_frame_color = np.array([110, 143, 171])
+    mask = cv2.inRange(hsv, lower_frame_color, upper_frame_color)
+    return mask

@@ -8,7 +8,7 @@ from tkinter import messagebox, Label, Entry, Button, Tk
 from PIL import Image, ImageTk
 from detection_utils import *
 from rectification_utils import *
-from retrival_utils import *
+from retrieval_utils import *
 
 
 class BackgroundTask:
@@ -59,6 +59,9 @@ def tkThreadingTest():
             self.rects_label_0.pack()
             self.rects_label_1 = Label(self.master, image="")
             self.rects_label_1.pack()
+            # ToDo: print rectified images on GUI
+            self.rectified_array = []
+            self.array_max_lenght = 3
 
             self.bg_task = BackgroundTask(self.analyze)
 
@@ -88,32 +91,33 @@ def tkThreadingTest():
             except:
                 print("Error creating file for solution")
                 return
-            img = []
+            imgs = []
             counter = 0
-            # b_hist, g_hist, r_hist = get_mean_hist()
-            skip = 4
-            # count = 0
+            skip = 1
             while cap.isOpened():
                 ret, frame = cap.read()
                 if ret:
                     skip -= 1
                     if skip == 0:
-                        skip = 4
+                        skip = 1
                         scale_percent = 30
                         width = int(frame.shape[1] * scale_percent / 100)
                         height = int(frame.shape[0] * scale_percent / 100)
                         dsize = (width, height)
 
-                        # rects_0, bounding_boxes = print_rectangles_with_findContours(method_0(frame.copy()), frame.copy())
-                        rects_1, bounding_boxes = print_rectangles_with_findContours(method_1(frame.copy()), frame.copy())
-                        # count += 1
-                        # cv2.imshow('Rectangles', rects)
-                        img.append(rects_1)
+                        img_0, bounding_boxes0, rectified_images0 = first_step(method_1(frame.copy()), frame.copy())
+                        img_1, bounding_boxes1, rectified_images1 = first_step(method_2(frame.copy()), frame.copy())
+                        imgs.append(img_0)
 
-                        # self.print_on_GUI(rects_0, self.rects_label_0, dsize)
-                        self.print_on_GUI(rects_1, self.rects_label_1, dsize)
+                        self.print_on_GUI(img_0, self.rects_label_0, dsize)
+                        self.print_on_GUI(img_1, self.rects_label_1, dsize)
+                        # uncomment the following lines when it's possibile to display rectified images un GUI
+                        # for j, image in enumerate(rectified_images):
+                        #     if j > self.array_max_lenght:
+                        #         break
+                        #     self.print_on_GUI(image, self.rectified_array[j], dsize)
 
-                        for i, box in enumerate(bounding_boxes):
+                        for i, box in enumerate(bounding_boxes0):
                             box_string = ""
                             for j in range(3):
                                 box_string += str(box[j]) + ","
@@ -125,16 +129,15 @@ def tkThreadingTest():
                         # sleep because otherwise frames are displayed too rapidly
                         # time.sleep(0.02)
                         counter += 1
-
                 else:
                     break
 
             try:
-                height, width, layers = img[1].shape
+                height, width, layers = imgs[1].shape
                 fourcc = VideoWriter_fourcc(*'MP42')
                 video = cv2.VideoWriter(folder_name + "/video.avi", fourcc, 24, (width, height))
-                for j in range(len(img)):
-                    video.write(img[j])
+                for j in range(len(imgs)):
+                    video.write(imgs[j])
                 video.release()
             except:
                 print('Video build failed')

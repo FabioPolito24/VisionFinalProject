@@ -4,7 +4,10 @@ import math
 import glob
 import scipy.spatial.distance
 
+
 def houghLines(edged):
+    y, x = edged.shape
+    img = np.zeros((y, x, 3), np.uint8)
     lines = cv2.HoughLines(edged, 1, np.pi / 180, 50, None, 0, 0)
     # Draw the lines
     if lines is not None:
@@ -17,8 +20,8 @@ def houghLines(edged):
             y0 = b * rho
             pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * a))
             pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * a))
-            cv2.line(edged, pt1, pt2, (255, 255, 255), 3)
-    return edged
+            cv2.line(img, pt1, pt2, (255, 255, 255), 2)
+    return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 
 # Reorder the points in the correct way
