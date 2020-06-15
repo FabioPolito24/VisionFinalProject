@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from general_utils import read_all_paintings
+from PaintingDetection.general_utils import read_all_paintings
 
 
 NORM_FACTOR = 50

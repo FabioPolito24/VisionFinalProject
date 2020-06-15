@@ -2,9 +2,9 @@ import numpy as np
 import cv2
 import imutils
 
-from rectification_utils import houghLines
-from retrieval_utils import orb_features_matching
-from pyimagesearch.transform import four_point_transform
+from PaintingDetection.rectification_utils import houghLines
+from PaintingDetection.retrieval_utils import orb_features_matching
+from PaintingDetection.pyimagesearch.transform import four_point_transform
 
 DELTA = 30
 LIGHT_FACTOR = 40

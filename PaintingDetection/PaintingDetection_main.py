@@ -4,11 +4,14 @@ import time
 import os
 import numpy as np
 from cv2 import VideoWriter_fourcc
-from tkinter import messagebox, Label, Entry, Button, Tk
+from tkinter import messagebox, Label, Entry, Button, Tk, Frame, LabelFrame
 from PIL import Image, ImageTk
-from detection_utils import *
-from rectification_utils import *
-from retrieval_utils import *
+from PaintingDetection.detection_utils import *
+from PaintingDetection.retrieval_utils import *
+from PaintingDetection.rectification_utils import *
+from PaintingDetection.general_utils import *
+#from PeopleLocalization.main import *
+#from yolo.people_detector import *
 
 
 class BackgroundTask:
@@ -48,18 +51,36 @@ def tkThreadingTest():
     class AnalyzerGUI:
         def __init__(self, master):
             self.master = master
-            self.master.geometry("600x700+400+180")
+            self.master.geometry("800x800")
             self.master.title("Video Analyzer")
-            Label(self.master, text="Insert path to a video").pack()
-            self.entry = Entry()
+
+            #--------- Instruction, text edit, and play button, all packed in one frame ---------
+            self.play_frame = LabelFrame(self.master, text="Insert path to a video", padx=20, pady=10)
+            self.play_frame.grid(row=0,column=0)
+            #Path to video
+            self.entry = Entry(self.play_frame)
             self.entry.insert(0, "../videos/vid001.MP4")
-            self.entry.pack()
-            Button(root, text="Submit", command=self.onThreadedClicked).pack()
+            self.entry.grid(row=0, column=0)
+            #Play Button
+            self.play_Button = Button(self.play_frame, text="Play", command=self.onThreadedClicked)
+            self.play_Button.grid(row=0, column=1)
+
+            #--------- Video container ---------
             self.rects_label_0 = Label(self.master, image="")
-            self.rects_label_0.pack()
-            self.rects_label_1 = Label(self.master, image="")
-            self.rects_label_1.pack()
+            self.rects_label_0.grid(row=1,column=0)
+            #self.rects_label_1 = Label(self.master, image="")
+            #self.rects_label_1.grid(row=2,column=0)
+
+            # --------- Museum Map container ---------
+
+            self.museum_map_label = Label(self.master, image="")
+            self.museum_map_label.grid(row=2, column=0)
+
+            # --------- Rectified paintings frame and container ---------
             # ToDo: print rectified images on GUI
+            self.rect_paint_frame = LabelFrame(self.master, text="Rectified Paintings", padx=50, pady=50)
+            self.rect_paint_frame.grid(row=0, column=1, rowspan=2)
+
             self.rectified_array = []
             self.array_max_lenght = 3
 
@@ -106,11 +127,11 @@ def tkThreadingTest():
                         dsize = (width, height)
 
                         img_0, bounding_boxes0, rectified_images0 = first_step(method_1(frame.copy()), frame.copy())
-                        img_1, bounding_boxes1, rectified_images1 = first_step(method_2(frame.copy()), frame.copy())
+                        #img_1, bounding_boxes1, rectified_images1 = first_step(method_2(frame.copy()), frame.copy())
                         imgs.append(img_0)
 
                         self.print_on_GUI(img_0, self.rects_label_0, dsize)
-                        self.print_on_GUI(img_1, self.rects_label_1, dsize)
+                        #self.print_on_GUI(img_1, self.rects_label_1, dsize)
                         # uncomment the following lines when it's possibile to display rectified images un GUI
                         # for j, image in enumerate(rectified_images):
                         #     if j > self.array_max_lenght:
@@ -147,14 +168,15 @@ def tkThreadingTest():
             file.close()
             self.rects_label_0.configure(image="")
             self.rects_label_0.image = ""
-            self.rects_label_1.configure(image="")
-            self.rects_label_1.image = ""
+            #self.rects_label_1.configure(image="")
+            #self.rects_label_1.image = ""
             messagebox.showinfo("Info", "Video and csv file saved at location ./" + folder_name)
 
-        def print_on_GUI(self, rects, label, dsize):
-            rects = cv2.cvtColor(rects, cv2.COLOR_BGR2RGB)
-            img = Image.fromarray(cv2.resize(rects, dsize))
+        def print_on_GUI(self, frame, label, dsize):
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(cv2.resize(frame, dsize))
             img = ImageTk.PhotoImage(image=img)
+            label.forget()
             label.configure(image=img)
             label.image = img
 
