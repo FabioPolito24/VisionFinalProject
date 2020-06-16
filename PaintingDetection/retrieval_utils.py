@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 from PaintingDetection.general_utils import read_all_paintings
 
-
 DEBUG = False
 
 
@@ -12,6 +11,7 @@ def orb_features_matching(im):
     images, filenames = read_all_paintings()
     top_5_im = [{'im': None, 'filename': None}] * 5
     top_5_score = np.zeros((5,))
+    total = 0
     if DEBUG:
         # # add brightness to the image
         # new_image = np.zeros(im.shape, im.dtype)
@@ -29,28 +29,50 @@ def orb_features_matching(im):
     kp1, des1 = orb.detectAndCompute(new_image, None)
     for i, im_db in enumerate(images):
         kp2, des2 = orb.detectAndCompute(im_db, None)
-        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-        matches = bf.match(des1, des2)
-        matches = sorted(matches, key=lambda x: x.distance)
-        im_match = cv2.drawMatches(new_image, kp1, im_db, kp2, matches[:20], None,
-                                   flags=cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
-        if DEBUG:
-            cv2.imshow("matches", im_match)
-            cv2.waitKey()
-        # score created as a weighted sum of matches and distances
-        # better the matches, smaller the average distance, so we subtract this average to a symbolic number (150)
-        score = len(matches) * 0.3 + 150 - np.mean([data.distance for data in matches[:10]]) * 0.7
-        if score > top_5_score[-1]:
-            top_5_score[-1] = score
-            top_5_score[::-1].sort()
-            j, = np.where(np.isclose(top_5_score, score))
-            if len(j) == 1:
-                top_5_im[j[0]]['im'] = im_db
-                top_5_im[j[0]]['filename'] = filenames[i]
-            else:
-                print("[ORB_MATCHING]: 2 images from database with the same score")
-                top_5_im[j[0]] = im_db
-    return top_5_im
+        # crossCheck=True alternative to D.Lowe method
+        # bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        bf = cv2.BFMatcher(cv2.NORM_HAMMING)
+        matches = bf.knnMatch(des1, des2, k=2)
+        # Apply ratio test from D.Lowe in sift paper
+        good = []
+        print(str(i) + "----------------")
+        for m, n in matches:
+            # as the hyperparameter get closer to 1, more key points will be matched
+            if m.distance < 0.70 * n.distance:
+                good.append([m, n])
+        im_match = cv2.drawMatchesKnn(new_image, kp1, im_db, kp2, good, None,
+                                      flags=2)
+        # cv2.imshow("matches", im_match)
+        # cv2.waitKey()
+        total += len(good);
+        if (len(good) > top_5_score.min()):
+            top_5_score[top_5_score.argmin()] = len(good)
+            top_5_im[top_5_score.argmin()] = {'im': im_db, 'filename': filenames[i]}
+        print(len(good))
+
+    #     matches = bf.match(des1, des2)
+    #     # good = sorted(good, key=lambda x: x.distance)
+    #     matches = sorted(matches, key=lambda x: x.distance)
+    #     im_match = cv2.drawMatches(new_image, kp1, im_db, kp2, matches[:20], None,
+    #                                flags=cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
+    #     if DEBUG:
+    #         cv2.imshow("matches", im_match)
+    #         cv2.waitKey()
+    #     # score created as a weighted sum of matches and distances
+    #     # better the matches, smaller the average distance, so we subtract this average to a symbolic number (150)
+    #     score = len(matches) * 0.3 + 150 - np.mean([data.distance for data in matches[:10]]) * 0.7
+    #     if score > top_5_score[-1]:
+    #         top_5_score[-1] = score
+    #         top_5_score[::-1].sort()
+    #         j, = np.where(np.isclose(top_5_score, score))
+    #         if len(j) == 1:
+    #             top_5_im[j[0]]['im'] = im_db
+    #             top_5_im[j[0]]['filename'] = filenames[i]
+    #         else:
+    #             print("[ORB_MATCHING]: 2 images from database with the same score")
+    #             top_5_im[j[0]] = im_db
+    # return top_5_im
+    return
 
 
 # Match the features between two images using AKAZE and return the image showing that

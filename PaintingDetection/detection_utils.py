@@ -56,6 +56,8 @@ def first_step(edged, frame):
                             else:
                                 rects[i] = 0
             if rects[i] == 1:
+                # questa funzione passa a second step il frame com la bounding box sopra, questo va rovinare processo di
+                # rettifica del quadro, era voluto?
                 cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
                 bounding_boxes.append((x0, y0, w0, h0))
                 ret, warped = second_step(frame[
@@ -76,7 +78,8 @@ def second_step(orig):
     img = imutils.resize(orig, height=500)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     # cv2.imshow('HSV', hsv)
-    # cv2.imshow('RGB', img)
+    # cv2.imshow('RGB', orig)
+    # cv2.waitKey()
     # rgb_gray image has the only purpose to visualize the differences between rgb and hsv
     # rgb_gray = preprocessing(img)
     hsv_gray = preprocessing(hsv)
@@ -115,6 +118,7 @@ def second_step(orig):
         x, y, w, h = cv2.boundingRect(c)
         # cv2.imshow('bb_cnt', img[y:y + h, x:x + w, :])
         # ToDo: call orb feature matching with img[y:y + h, x:x + w, :] as input
+        # orb_features_matching(img[y:y + h, x:x + w, :])
         # uncomment the following lines if you want to visualize the contours
         # canvas = black_img.copy()
         # cv2.drawContours(canvas, [approx], -1, (255, 255, 255), 1)
@@ -128,10 +132,10 @@ def second_step(orig):
             break
     try:
         # show the contour (outline) of the painting
-        cv2.drawContours(img, [screenCnt], -1, (0, 255, 0), 2)
+        cv2.drawContours(img, [screenCnt], -1, (255, 0, 0), 15)
         # cv2.imshow("Outline", img)
         # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        cv2.destroyAllWindows()
         # apply the four point transform to obtain a top-down view of the painting
         keypoints = screenCnt.reshape(4, 2)
         warped = four_point_transform(orig, keypoints * ratio)
