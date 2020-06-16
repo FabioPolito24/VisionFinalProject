@@ -1,21 +1,20 @@
 from __future__ import division
-import time
-import torch 
-import torch.nn as nn
-from torch.autograd import Variable
-import numpy as np
-import cv2
 from yolo.util import *
-import argparse
-import os 
-import os.path as osp
 from yolo.darknet import Darknet
-import pickle as pkl
-import pandas as pd
-import random
+
+'''
+    Example usage of this class:
+
+    det = PeopleDetector()
+    cap = cv2.VideoCapture(0)
+    ret, frame = cap.read()
+    output = det.detectPeopleFromFrame(frame)
+    if netOutput != None:
+        frameWithBB = det.writLabels(frame, netOutput)
+'''
 
 class PeopleDetector:
-    def __init__(self, confidence = 0.5, nms_thresh = 0.4, resolution = 416, weights_path = 'weights/yolov3.weights', cfg_path = 'cfg/yolov3.cfg', num_classes = 80, names_path = 'data/coco.names'):
+    def __init__(self, confidence = 0.5, nms_thresh = 0.4, resolution = 416, weights_path = '../yolo/weights/yolov3.weights', cfg_path = '../yolo/cfg/yolov3.cfg', num_classes = 80, names_path = '../yolo/data/coco.names'):
         self.confidence = confidence
         self.nms_thesh = nms_thresh
         self.weightsfile = weights_path
@@ -47,7 +46,7 @@ class PeopleDetector:
         img_ = torch.from_numpy(img_).float().div(255.0).unsqueeze(0)
         return img_, orig_im, dim
 
-    def write(self, x, img, color = (0, 0, 255)):
+    def writeSingleLabel(self, x, img, color = (0, 0, 255)):
         """
         Put label on top of image
         Default label color: red
@@ -63,7 +62,17 @@ class PeopleDetector:
         cv2.putText(img, label, (c1[0], c1[1] + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 1, [225, 255, 255], 1);
         return img
 
+    def writLabels(self, origin_im, netOutput):
+        """
+        Put all the labels on top of image
+        """
+        list(map(lambda x: self.writeSingleLabel(x, origin_im), netOutput))
+        return origin_im
+
     def detectPeopleFromFrame(self, frame):
+        """
+        Detect people inside a frame and return bounding boxes
+        """
         #Prepare imgs compatible with pytorch
         img, orig_im, dim = self.prep_image(frame)
 
@@ -80,8 +89,7 @@ class PeopleDetector:
 
         #If No detection...
         if type(output) == int:
-            cv2.imshow("frame int", orig_im)
-            cv2.waitKey()
+            return None
 
         #If we have detection mantain only people --> people id == 0
         output = output[output[:,-1] < 1]
@@ -91,24 +99,4 @@ class PeopleDetector:
         output[:, [1, 3]] *= frame.shape[1]
         output[:, [2, 4]] *= frame.shape[0]
 
-        #Write Labels on top of original frame
-        list(map(lambda x: self.write(x, orig_im), output))
-
-        cv2.imshow("frame", orig_im)
-        cv2.waitKey()
-
-
-def main():
-    """
-        Example usage of this class:
-
-        cap = cv2.VideoCapture(0)
-        ret, frame = cap.read()
-        det.detectPeopleFromFrame(frame)
-    """
-    det = PeopleDetector()
-    example_img = cv2.imread('imgs/messi.jpg')
-    det.detectPeopleFromFrame(example_img)
-
-if __name__ == "__main__":
-    main()
+        return output
