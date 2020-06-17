@@ -91,7 +91,7 @@ class PeopleDetector:
         if type(output) == int:
             return None
 
-        #If we have detection mantain only people --> people id == 0
+        #If we have detection maintain only people --> people id == 0
         output = output[output[:,-1] < 1]
 
         #Resize Label according to input frame dimension

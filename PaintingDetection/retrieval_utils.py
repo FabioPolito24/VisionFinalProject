@@ -35,7 +35,6 @@ def orb_features_matching(im):
         matches = bf.knnMatch(des1, des2, k=2)
         # Apply ratio test from D.Lowe in sift paper
         good = []
-        print(str(i) + "----------------")
         for m, n in matches:
             # as the hyperparameter get closer to 1, more key points will be matched
             if m.distance < 0.70 * n.distance:
@@ -50,6 +49,13 @@ def orb_features_matching(im):
             top_5_im[top_5_score.argmin()] = {'im': im_db, 'filename': filenames[i]}
         print(len(good))
 
+    for i, score in enumerate(top_5_score):
+        print("match number " + str(i) + " with score " + str(score))
+        cv2.imshow(top_5_im[i]['filename'] + " number " + str(i), top_5_im[i]['im'])
+
+    print("Total score =   " + str(total))
+    print("mean score =   " + str(total/95))
+    cv2.waitKey()
     #     matches = bf.match(des1, des2)
     #     # good = sorted(good, key=lambda x: x.distance)
     #     matches = sorted(matches, key=lambda x: x.distance)
