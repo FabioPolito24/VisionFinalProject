@@ -25,7 +25,7 @@ def bb_intersection_over_union(boxA, boxB):
     return iou
 
 
-def first_step(edged, frame):
+def first_step(edged, frame, db_paintings):
     contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     rects = np.ones([len(contours), ])
     bounding_boxes = []
@@ -63,14 +63,14 @@ def first_step(edged, frame):
                 ret, warped = second_step(frame[
                                       max(0, y0-DELTA): min(frame.shape[0], y0+h0+DELTA),
                                       max(0, x0-DELTA): min(frame.shape[1], x0+w0+DELTA),
-                                      :])
+                                      :], db_paintings)
                 if warped is not None:
                     rectified_images.append(warped)
     return frame, bounding_boxes, rectified_images
 
 
 # second step not working well if the painting doesn't have a rectangular shape
-def second_step(orig):
+def second_step(orig, db_paintings):
     ret = False
     orig = enlight(orig)
     ratio = orig.shape[0] / 500.0
@@ -118,7 +118,7 @@ def second_step(orig):
         x, y, w, h = cv2.boundingRect(c)
         # cv2.imshow('bb_cnt', img[y:y + h, x:x + w, :])
         # ToDo: call orb feature matching with img[y:y + h, x:x + w, :] as input
-        # orb_features_matching(img[y:y + h, x:x + w, :])
+        # orb_features_matching(img[y:y + h, x:x + w, :], db_paintings)
         # uncomment the following lines if you want to visualize the contours
         # canvas = black_img.copy()
         # cv2.drawContours(canvas, [approx], -1, (255, 255, 255), 1)

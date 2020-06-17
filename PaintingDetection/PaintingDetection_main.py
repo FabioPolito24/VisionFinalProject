@@ -81,11 +81,14 @@ class AnalyzerGUI:
         self.rectified_array = []
         self.array_max_lenght = 3
 
-        # --------- People detector (YoloV3)---------
+        # --------- People detector (YoloV3) ---------
         self.peopleDetector = PeopleDetector()
 
-        # --------- Background Task---------
+        # --------- Background Task ---------
         self.bg_task = BackgroundTask(self.analyze)
+
+        # --------- DB paintings ---------
+        self.db_paintings = load_db_paintings('../paintings_db/db_paintings.pickle')
 
 
 
@@ -135,7 +138,7 @@ class AnalyzerGUI:
                     netOutput = self.peopleDetector.detectPeopleFromFrame(frame)
 
                     #Detect painting inside actual frame
-                    frameWithBB, bounding_boxes0, rectified_images0 = first_step(method_1(frame.copy()), frame.copy())
+                    frameWithBB, bounding_boxes0, rectified_images0 = first_step(method_1(frame.copy()), frame.copy(), self.db_paintings)
                     #img_1, bounding_boxes1, rectified_images1 = first_step(method_2(frame.copy()), frame.copy())
 
                     if len(netOutput.size()) > 0:

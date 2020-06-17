@@ -1,16 +1,32 @@
 import cv2
 import numpy as np
 from PaintingDetection.general_utils import read_all_paintings
+import _pickle as pickle
 
 DEBUG = False
 
 
-# Match the features between two images using ORB and return the image showing that
-def orb_features_matching(im):
+# Load the DB's paintings
+def load_db_paintings(filepath):
+    with open('../paintings_db/db_paintings.pickle', 'rb') as db_paintings_file:
+
+        paintings = pickle.load(db_paintings_file)
+
+        # After config_dictionary is read from file
+        for i, painting in enumerate(paintings):
+            for k, point in enumerate(painting['kp']):
+                paintings[i]['kp'][k] = cv2.KeyPoint(x=point[0][0], y=point[0][1], _size=point[1], _angle=point[2],
+                                                     _response=point[3], _octave=point[4], _class_id=point[5])
+
+    return paintings
+
+
+# Use ORB to find the top 5 matches between im and the DB's paintings.
+# Return a list of dictionaries containing the top 5 matched paintings, their name and the numbers of matches
+def orb_features_matching(im, db_paintings):
     orb = cv2.ORB_create()
-    images, filenames = read_all_paintings()
-    top_5_im = [{'im': None, 'filename': None}] * 5
-    top_5_score = np.zeros((5,))
+    top_5_im = [{'im': None, 'filename': None, 'score': None}] * 5
+    top_5_score = np.full((5,), -1)
     total = 0
     if DEBUG:
         # # add brightness to the image
@@ -27,58 +43,43 @@ def orb_features_matching(im):
     else:
         new_image = im.copy()
     kp1, des1 = orb.detectAndCompute(new_image, None)
-    for i, im_db in enumerate(images):
-        kp2, des2 = orb.detectAndCompute(im_db, None)
+    for painting in db_paintings:
         # crossCheck=True alternative to D.Lowe method
         # bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         bf = cv2.BFMatcher(cv2.NORM_HAMMING)
-        matches = bf.knnMatch(des1, des2, k=2)
+        matches = bf.knnMatch(des1, painting['des'], k=2)
         # Apply ratio test from D.Lowe in sift paper
         good = []
         for m, n in matches:
             # as the hyperparameter get closer to 1, more key points will be matched
             if m.distance < 0.70 * n.distance:
                 good.append([m, n])
-        im_match = cv2.drawMatchesKnn(new_image, kp1, im_db, kp2, good, None,
-                                      flags=2)
+        im_match = cv2.drawMatchesKnn(new_image, kp1, painting['im'], painting['kp'], good, None, flags=2)
         # cv2.imshow("matches", im_match)
         # cv2.waitKey()
         total += len(good);
-        if (len(good) > top_5_score.min()):
+        if len(good) > top_5_score.min():
+            top_5_im[top_5_score.argmin()] = {'im': painting['im'], 'filename': painting['filename'], 'score': len(good)}
             top_5_score[top_5_score.argmin()] = len(good)
-            top_5_im[top_5_score.argmin()] = {'im': im_db, 'filename': filenames[i]}
-        print(len(good))
 
-    for i, score in enumerate(top_5_score):
-        print("match number " + str(i) + " with score " + str(score))
-        cv2.imshow(top_5_im[i]['filename'] + " number " + str(i), top_5_im[i]['im'])
+    total_top_5 = 0
+    # Sort the best 5 matches found
+    top_5_match = sorted(top_5_im, key=lambda k: k['score'], reverse=True)
 
-    print("Total score =   " + str(total))
-    print("mean score =   " + str(total/95))
-    cv2.waitKey()
-    #     matches = bf.match(des1, des2)
-    #     # good = sorted(good, key=lambda x: x.distance)
-    #     matches = sorted(matches, key=lambda x: x.distance)
-    #     im_match = cv2.drawMatches(new_image, kp1, im_db, kp2, matches[:20], None,
-    #                                flags=cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
-    #     if DEBUG:
-    #         cv2.imshow("matches", im_match)
-    #         cv2.waitKey()
-    #     # score created as a weighted sum of matches and distances
-    #     # better the matches, smaller the average distance, so we subtract this average to a symbolic number (150)
-    #     score = len(matches) * 0.3 + 150 - np.mean([data.distance for data in matches[:10]]) * 0.7
-    #     if score > top_5_score[-1]:
-    #         top_5_score[-1] = score
-    #         top_5_score[::-1].sort()
-    #         j, = np.where(np.isclose(top_5_score, score))
-    #         if len(j) == 1:
-    #             top_5_im[j[0]]['im'] = im_db
-    #             top_5_im[j[0]]['filename'] = filenames[i]
-    #         else:
-    #             print("[ORB_MATCHING]: 2 images from database with the same score")
-    #             top_5_im[j[0]] = im_db
-    # return top_5_im
-    return
+    # Some useful information to understand the result of the function
+    # cv2.imshow("Original", im)
+    # for i, score in enumerate(top_5_match):
+    #     print("match number " + str(i) + " with score " + str(top_5_match[i]['score']))
+    #     cv2.imshow(top_5_match[i]['filename'] + " number " + str(i), top_5_match[i]['im'])
+    #     total_top_5 += top_5_match[i]['score']
+
+    # Some metric that could help understand if the painting has been found in the DB
+    # print("Total score =   " + str(total))
+    # print("mean score =   " + str(total / 95))
+    # print("mean top 5 = " + str(total_top_5 / 5))
+    # cv2.waitKey()
+
+    return top_5_match
 
 
 # Match the features between two images using AKAZE and return the image showing that
