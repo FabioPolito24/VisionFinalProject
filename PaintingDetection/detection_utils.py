@@ -1,9 +1,11 @@
 import numpy as np
 import cv2
 import imutils
+import time
 
 from PaintingDetection.rectification_utils import houghLines
 from PaintingDetection.retrieval_utils import orb_features_matching
+from PaintingDetection.retrieval_utils import orb_features_matching_flann
 from PaintingDetection.pyimagesearch.transform import four_point_transform
 
 DELTA = 30
@@ -118,7 +120,8 @@ def second_step(orig, db_paintings):
         x, y, w, h = cv2.boundingRect(c)
         # cv2.imshow('bb_cnt', img[y:y + h, x:x + w, :])
         # ToDo: call orb feature matching with img[y:y + h, x:x + w, :] as input
-        # orb_features_matching(img[y:y + h, x:x + w, :], db_paintings)
+        orb_features_matching(img[y:y + h, x:x + w, :], db_paintings)
+        #   orb_features_matching_flann(img[y:y + h, x:x + w, :], db_paintings)
         # uncomment the following lines if you want to visualize the contours
         # canvas = black_img.copy()
         # cv2.drawContours(canvas, [approx], -1, (255, 255, 255), 1)
