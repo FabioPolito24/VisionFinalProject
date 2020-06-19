@@ -32,6 +32,7 @@ def first_step(edged, frame, db_paintings):
     rects = np.ones([len(contours), ])
     bounding_boxes = []
     rectified_images = []
+    paintings_matched = []
     # select only valid contours
     for i, contour in enumerate(contours):
         try:
@@ -62,13 +63,15 @@ def first_step(edged, frame, db_paintings):
                 # rettifica del quadro, era voluto?
                 cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
                 bounding_boxes.append((x0, y0, w0, h0))
-                ret, warped = second_step(frame[
+                ret, warped, top5 = second_step(frame[
                                       max(0, y0-DELTA): min(frame.shape[0], y0+h0+DELTA),
                                       max(0, x0-DELTA): min(frame.shape[1], x0+w0+DELTA),
                                       :], db_paintings)
+                if len(top5) != 0:
+                    paintings_matched.append(top5[0])
                 if warped is not None:
                     rectified_images.append(warped)
-    return frame, bounding_boxes, rectified_images
+    return frame, bounding_boxes, rectified_images, paintings_matched
 
 
 # second step not working well if the painting doesn't have a rectangular shape
@@ -92,6 +95,9 @@ def second_step(orig, db_paintings):
     hsv_gray = (hsv_gray > thresh).astype(np.uint8) * 255
     # cv2.imshow('RGB_otsu', rgb_gray)
     # cv2.imshow('HSV_otsu_start', hsv_gray)
+
+    # Initialize the list that will contain the best 5 paintings matching
+    top_5_matches = []
 
     # sometimes the background has been filled with 255 and the painting with 0
     # the following code make sure that the background is filled with 0,
@@ -120,7 +126,7 @@ def second_step(orig, db_paintings):
         x, y, w, h = cv2.boundingRect(c)
         # cv2.imshow('bb_cnt', img[y:y + h, x:x + w, :])
         # ToDo: call orb feature matching with img[y:y + h, x:x + w, :] as input
-        orb_features_matching(img[y:y + h, x:x + w, :], db_paintings)
+        top_5_matches = orb_features_matching(img[y:y + h, x:x + w, :], db_paintings)
         #   orb_features_matching_flann(img[y:y + h, x:x + w, :], db_paintings)
         # uncomment the following lines if you want to visualize the contours
         # canvas = black_img.copy()
@@ -149,9 +155,9 @@ def second_step(orig, db_paintings):
     except:
         ret = False
     try:
-        return ret, warped
+        return ret, warped, top_5_matches
     except:
-        return ret, None
+        return ret, None, top_5_matches
 
 
 def enlight(rgb_img):

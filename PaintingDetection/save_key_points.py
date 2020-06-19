@@ -5,7 +5,7 @@ import _pickle as pickle
 def main():
     names = glob.glob("../paintings_db/*.png")
     p = []
-    orb = cv2.ORB_create(100)
+    orb = cv2.ORB_create()
     for name in names:
         im = cv2.imread(name)
         kp, des = orb.detectAndCompute(im, None)

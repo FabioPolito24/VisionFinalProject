@@ -81,6 +81,13 @@ class AnalyzerGUI:
         self.rectified_array = []
         self.array_max_lenght = 3
 
+        # --------- Matched paintings frame and container ---------
+        # ToDo: print matched images on GUI
+        self.match_paint_frame = LabelFrame(self.master, text="Matched Paintings", padx=50, pady=50)
+        self.match_paint_frame.grid(row=0, column=2, rowspan=4)
+        self.matched_array = [Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image="")]
+        self.array_max_lenght = 3
+
         # --------- People detector (YoloV3) ---------
         self.peopleDetector = PeopleDetector()
 
@@ -138,7 +145,7 @@ class AnalyzerGUI:
                     netOutput = self.peopleDetector.detectPeopleFromFrame(frame)
 
                     #Detect painting inside actual frame
-                    frameWithBB, bounding_boxes0, rectified_images0 = first_step(method_1(frame.copy()), frame.copy(), self.db_paintings)
+                    frameWithBB, bounding_boxes0, rectified_images0, paintings_matched = first_step(method_1(frame.copy()), frame.copy(), self.db_paintings)
                     #img_1, bounding_boxes1, rectified_images1 = first_step(method_2(frame.copy()), frame.copy())
 
                     if len(netOutput.size()) > 0:
@@ -153,6 +160,14 @@ class AnalyzerGUI:
 
                     #Print Map with actual room
                     self.print_on_GUI(print_on_map(get_room("Sant'Antonio da Padova")), self.museum_map_label, dsize)
+
+                    #Print the matched paintings
+                    #Need to fix the representation on the GUI
+                    # for j, dic in enumerate(paintings_matched):
+                    #     if j > self.array_max_lenght:
+                    #         break
+                    #     self.print_on_GUI(dic['im'], self.matched_array[j], dsize)
+                    #     self.matched_array[j].pack()
 
                     # uncomment the following lines when it's possibile to display rectified images un GUI
                     # for j, image in enumerate(rectified_images):

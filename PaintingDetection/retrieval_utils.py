@@ -86,7 +86,7 @@ def orb_features_matching(im, db_paintings):
 
 # Use flann matcher but doesn't work, sometimes the knnMatch don't return 2 value and I don't know why
 def orb_features_matching_flann(im, db_paintings):
-    orb = cv2.ORB_create(100)
+    orb = cv2.ORB_create()
     top_5_im = [{'im': None, 'filename': None, 'score': None}] * 5
     top_5_score = np.full((5,), -1)
     total = 0
