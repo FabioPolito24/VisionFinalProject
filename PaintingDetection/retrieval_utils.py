@@ -29,21 +29,6 @@ def orb_features_matching(im, db_paintings):
     top_5_im = [{'im': None, 'filename': None, 'score': None}] * 5
     top_5_score = np.full((5,), -1)
     total = 0
-    # if DEBUG:
-    #     # # add brightness to the image
-    #     # new_image = np.zeros(im.shape, im.dtype)
-    #     # for y in range(im.shape[0]):
-    #     #     for x in range(im.shape[1]):
-    #     #         for c in range(im.shape[2]):
-    #     #             new_image[y, x, c] = np.clip(1.3 * im[y, x, c] + 40, 0, 255)
-    #     # cv2.imshow('Original Image', im)
-    #     # cv2.imshow('New Image', new_image)
-    #     # # Wait until user press some key
-    #     # cv2.waitKey()
-    #     new_image = im.copy()
-    # else:
-    #     new_image = im.copy()
-    # start_time = time.time()
     kp1, des1 = orb.detectAndCompute(im, None)
     for painting in db_paintings:
         # crossCheck=True alternative to D.Lowe method
