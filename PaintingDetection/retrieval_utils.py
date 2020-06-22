@@ -7,8 +7,31 @@ import time
 DEBUG = False
 
 
+class PaintingsDB:
+    class __PaintingsDB:
+        def __init__(self):
+            with open('../paintings_db/db_paintings.pickle', 'rb') as db_paintings_file:
+
+                self.paintings = pickle.load(db_paintings_file)
+
+                # After config_dictionary is read from file
+                for i, painting in enumerate(self.paintings):
+                    for k, point in enumerate(painting['kp']):
+                        self.paintings[i]['kp'][k] = cv2.KeyPoint(x=point[0][0], y=point[0][1], _size=point[1],
+                                                                  _angle=point[2], _response=point[3],
+                                                                  _octave=point[4], _class_id=point[5])
+    instance = None
+
+    def __init__(self):
+        if not PaintingsDB.instance:
+            PaintingsDB.instance = PaintingsDB.__PaintingsDB()
+
+    def get_db(self):
+        return self.instance.paintings
+
+
 # Load the DB's paintings
-def load_db_paintings(filepath):
+def load_db_paintings():
     with open('../paintings_db/db_paintings.pickle', 'rb') as db_paintings_file:
 
         paintings = pickle.load(db_paintings_file)
@@ -24,7 +47,8 @@ def load_db_paintings(filepath):
 
 # Use ORB to find the top 5 matches between im and the DB's paintings.
 # Return a list of dictionaries containing the top 5 matched paintings, their name and the numbers of matches
-def orb_features_matching(im, db_paintings):
+def orb_features_matching(im):
+    db_paintings = PaintingsDB().get_db()
     orb = cv2.ORB_create()
     top_5_im = [{'im': None, 'filename': None, 'score': None}] * 5
     top_5_score = np.full((5,), -1)
@@ -70,7 +94,8 @@ def orb_features_matching(im, db_paintings):
     return top_5_match
 
 # Use flann matcher but doesn't work, sometimes the knnMatch don't return 2 value and I don't know why
-def orb_features_matching_flann(im, db_paintings):
+def orb_features_matching_flann(im):
+    db_paintings = PaintingsDB().get_db()
     orb = cv2.ORB_create()
     top_5_im = [{'im': None, 'filename': None, 'score': None}] * 5
     top_5_score = np.full((5,), -1)
@@ -137,3 +162,4 @@ def akaze_features_matching(im, im_db):
     im_match = cv2.drawMatches(im, kpts1, im_db, kpts2, matches[:20], None,
                                flags=cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
     return im_match
+

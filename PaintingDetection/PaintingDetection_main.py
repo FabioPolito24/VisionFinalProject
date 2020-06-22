@@ -94,8 +94,8 @@ class AnalyzerGUI:
         # --------- Background Task ---------
         self.bg_task = BackgroundTask(self.analyze)
 
-        # --------- DB paintings ---------
-        self.db_paintings = load_db_paintings('../paintings_db/db_paintings.pickle')
+        # --------- DB paintings initialization ---------
+        PaintingsDB()
 
 
 
@@ -145,7 +145,7 @@ class AnalyzerGUI:
                     netOutput = self.peopleDetector.detectPeopleFromFrame(frame)
 
                     #Detect painting inside actual frame
-                    frameWithBB, bounding_boxes0, rectified_images0, paintings_matched = first_step(method_1(frame.copy()), frame.copy(), self.db_paintings)
+                    frameWithBB, bounding_boxes0, rectified_images0, paintings_matched = first_step(method_1(frame.copy()), frame.copy())
                     #img_1, bounding_boxes1, rectified_images1 = first_step(method_2(frame.copy()), frame.copy())
 
                     if len(netOutput.size()) > 0:
