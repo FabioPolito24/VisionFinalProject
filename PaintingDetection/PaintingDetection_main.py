@@ -12,6 +12,7 @@ from PaintingDetection.rectification_utils import *
 from PaintingDetection.general_utils import *
 from PeopleLocalization.peopleLocalizator import *
 from yolo.people_detector import *
+from svm.dbCreator import label_hist
 
 
 class BackgroundTask:
@@ -158,6 +159,21 @@ class AnalyzerGUI:
 
                     # Print the matched paintings
                     # Need to fix the representation on the GUI
+
+                    # just some testing to create the db for svm
+                    # if counter % 100 == 0:
+                    #     for box in bounding_boxes0:
+                    #         label_hist(frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]])
+
+                    # Print Map with actual room
+                    # if len(paintings_matched) != 0:
+                    #     id = os.path.basename(os.path.normpath(paintings_matched[0]['filename']))
+                    #     self.print_on_GUI(print_on_map(get_room(id)), self.museum_map_label, dsize)
+                    # else:
+                    #     self.print_on_GUI(print_on_map(''), self.museum_map_label, dsize)
+                    # Print the matched paintings
+                    # Need to fix the representation on the GUI
+
                     # for j, dic in enumerate(paintings_matched):
                     #     if j > self.array_max_lenght:
                     #         break
