@@ -99,4 +99,7 @@ class PeopleDetector:
         output[:, [1, 3]] *= frame.shape[1]
         output[:, [2, 4]] *= frame.shape[0]
 
+        if output.shape[1] != 8:
+            return None
+
         return output

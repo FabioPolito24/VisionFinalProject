@@ -14,7 +14,6 @@ from PeopleLocalization.peopleLocalizator import *
 from yolo.people_detector import *
 from svm.dbCreator import label_hist
 
-
 class BackgroundTask:
     def __init__(self, taskFuncPointer):
         self.__taskFuncPointer_ = taskFuncPointer
@@ -48,10 +47,28 @@ class BackgroundTask:
 
 
 class AnalyzerGUI:
-    def __init__(self, master):
+    def __init__(self, master, width = 1200, height = 800):
         self.master = master
-        self.master.geometry("800x800")
+        self.window_width = width
+        self.window_height = height
+        self.master.geometry(str(width) + "x" + str(height))
         self.master.title("Video Analyzer")
+        self.last_paint_matched = "Sant'Antonio da Padova"
+        '''
+        Gui format: 1200 x 800
+        rectified.. and matched..  each 400x200
+        video 400x400
+        map 400x300
+        ------------------------|-------------------------
+        |   insert path         | rectified 1 | matched 1|
+        |-----------------------|------------------------|
+        |                       | rectified 2 | matched 2|
+        |   video and labels    |------------------------|
+        |-----------------------| rectified 3 | matched 3|
+        |                       |------------------------|
+        | map with localization | rectified 4 | matched 4|
+        ------------------------|-------------------------
+        '''
 
         #--------- Instruction, text edit, and play button, all packed in one frame ---------
         self.play_frame = LabelFrame(self.master, text="Insert path to a video", padx=20, pady=10)
@@ -65,28 +82,56 @@ class AnalyzerGUI:
         self.play_Button.grid(row=0, column=1)
 
         #--------- Video container ---------
-        self.rects_label_0 = Label(self.master, image="")
-        self.rects_label_0.grid(row=1,column=0)
-        #self.rects_label_1 = Label(self.master, image="")
-        #self.rects_label_1.grid(row=2,column=0)
+        self.out_video_dim = (int(self.window_width / 3), int(self.window_height / 2))
+        self.video_label = Label(self.master, image="")
+        frame = np.zeros((self.out_video_dim[1], self.out_video_dim[0], 3), dtype=np.uint8)
+        img = Image.fromarray(frame, 'RGB')
+        img = ImageTk.PhotoImage(image=img)
+        self.video_label.configure(image=img)
+        self.video_label.image = img
+        self.video_label.grid(row=1,column=0)
 
         # --------- Museum Map container ---------
+        self.museum_map_dimension = (int(self.window_width / 3), int(self.window_height / 2))
         self.museum_map_label = Label(self.master, image="")
+        frame = np.zeros((self.museum_map_dimension[1], self.museum_map_dimension[0], 3), dtype=np.uint8)
+        img = Image.fromarray(frame, 'RGB')
+        img = ImageTk.PhotoImage(image=img)
+        self.museum_map_label.configure(image=img)
+        self.museum_map_label.image = img
         self.museum_map_label.grid(row=2, column=0)
+
 
         # --------- Rectified paintings frame and container ---------
         # ToDo: print rectified images on GUI
-        self.rect_paint_frame = LabelFrame(self.master, text="Rectified Paintings", padx=50, pady=50)
-        self.rect_paint_frame.grid(row=0, column=1, rowspan=2)
-        self.rectified_array = []
-        self.array_max_lenght = 3
+        self.rect_paint_frame = LabelFrame(self.master, text="Rectified Paintings")
+        self.rect_paint_frame.grid(row=0, column=1, rowspan=3)
+        self.rectified_array = [Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image="")]
+        self.max_num_rect_paint = 4
+        self.rectified_dim = (int(self.window_width / 3), int(self.window_height / self.max_num_rect_paint))
+        for i in range(self.max_num_rect_paint):
+            frame = np.zeros((self.rectified_dim[1], self.rectified_dim[0], 3), dtype=np.uint8)
+            img = Image.fromarray(frame, 'RGB')
+            img = ImageTk.PhotoImage(image=img)
+            self.rectified_array[i].configure(image=img)
+            self.rectified_array[i].image = img
+            self.rectified_array[i].grid(row=i, column=0)
+
 
         # --------- Matched paintings frame and container ---------
         # ToDo: print matched images on GUI
-        self.match_paint_frame = LabelFrame(self.master, text="Matched Paintings", padx=50, pady=50)
-        self.match_paint_frame.grid(row=0, column=2, rowspan=4)
+        self.match_paint_frame = LabelFrame(self.master, text="Matched Paintings")
+        self.match_paint_frame.grid(row=0, column=2, rowspan=3)
         self.matched_array = [Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image="")]
-        self.array_max_lenght = 3
+        self.max_num_matched_paint = 4
+        self.matched_dim = (int(self.window_width / 3), int(self.window_height / self.max_num_matched_paint))
+        for i in range(self.max_num_matched_paint):
+            frame = np.zeros((self.matched_dim[1], self.matched_dim[0], 3), dtype=np.uint8)
+            img = Image.fromarray(frame, 'RGB')
+            img = ImageTk.PhotoImage(image=img)
+            self.matched_array[i].configure(image=img)
+            self.matched_array[i].image = img
+            self.matched_array[i].grid(row=i, column=0)
 
         # --------- People detector (YoloV3) ---------
         self.peopleDetector = PeopleDetector()
@@ -123,81 +168,83 @@ class AnalyzerGUI:
         except:
             print("Error creating file for solution")
             return
+
+        #Calculate size for output video, preserving format
+        if cap.isOpened():
+            width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+            height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            if width > height:
+                scale_percent = int(width / self.out_video_dim[1])
+            else:
+                scale_percent = int(height / self.out_video_dim[0])
+            self.out_video_dim = (int(width / scale_percent), int(height / scale_percent))
+            self.museum_map_dimension = ( self.out_video_dim[0], self.out_video_dim[1])
+
         imgs = []
-        counter = 0
-        skip = 1
+        frame_counter = 0
         while cap.isOpened():
             ret, frame = cap.read()
             if ret:
-                skip -= 1
-                if skip == 0:
-                    skip = 1
-                    scale_percent = 30
-                    width = int(frame.shape[1] * scale_percent / 100)
-                    height = int(frame.shape[0] * scale_percent / 100)
-                    dsize = (width, height)
 
-                    # Detect People inside actual frame
-                    netOutput = self.peopleDetector.detectPeopleFromFrame(frame)
+                #Detect People inside actual frame
+                netOutput = self.peopleDetector.detectPeopleFromFrame(frame)
 
-                    # Detect painting inside actual frame
-                    frameWithBB, bounding_boxes0, rectified_images0, paintings_matched = first_step(method_1(frame.copy()), frame.copy())
-                    # img_1, bounding_boxes1, rectified_images1 = first_step(method_2(frame.copy()), frame.copy())
-                    
-                    if len(netOutput.size()) > 0:
-                        frameWithBB = self.peopleDetector.writLabels(frameWithBB, netOutput)
+                #Detect painting inside actual frame
+                frameWithBB, bounding_boxes0, rectified_images, paintings_matched = first_step(method_1(frame.copy()), frame.copy())
 
-                    # Append actual frame to build a video at the end of execution
-                    imgs.append(frameWithBB)
+                #Put people localized on the frame
+                if netOutput != None:
+                    frameWithBB = self.peopleDetector.writLabels(frameWithBB, netOutput)
 
-                    # Print actual frame on the gui
-                    self.print_on_GUI(frameWithBB, self.rects_label_0, dsize)
-                    # self.print_on_GUI(img_1, self.rects_label_1, dsize)
+                #Append actual frame to build a video at the end of execution
+                imgs.append(frameWithBB)
 
-                    # Print Map with actual room
-                    self.print_on_GUI(print_on_map(get_room("Sant'Antonio da Padova")), self.museum_map_label, dsize)
+                # Print actual video frame on the gui
+                self.print_on_GUI(frameWithBB, self.video_label, self.out_video_dim)
 
-                    # Print the matched paintings
-                    # Need to fix the representation on the GUI
+                # just some testing to create the db for svm
+                # if frame_counter % 100 == 0:
+                #     for box in bounding_boxes0:
+                #         label_hist(frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]])
 
-                    # just some testing to create the db for svm
-                    # if counter % 100 == 0:
-                    #     for box in bounding_boxes0:
-                    #         label_hist(frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]])
+                #Print Map with actual room
+                # TODO update last_paint_matched variable
+                # TODO scoprire errore dentro al get_room
+                self.print_on_GUI(print_on_map(2), self.museum_map_label, self.museum_map_dimension)
+                #self.last_paint_matched = "La Carità romana"
+                #self.print_on_GUI(print_on_map(get_room(self.last_paint_matched)), self.museum_map_label, self.museum_map_dimension)
+                
+                #if len(paintings_matched) != 0:
+                #    id = os.path.basename(os.path.normpath(paintings_matched[0]['filename']))
+                #    self.print_on_GUI(print_on_map(get_room(id)), self.museum_map_label, self.museum_map_dimension)
+                #else:
+                #    self.print_on_GUI(print_on_map(''), self.museum_map_label, self.museum_map_dimension)
 
-                    # Print Map with actual room
-                    # if len(paintings_matched) != 0:
-                    #     id = os.path.basename(os.path.normpath(paintings_matched[0]['filename']))
-                    #     self.print_on_GUI(print_on_map(get_room(id)), self.museum_map_label, dsize)
-                    # else:
-                    #     self.print_on_GUI(print_on_map(''), self.museum_map_label, dsize)
-                    # Print the matched paintings
-                    # Need to fix the representation on the GUI
 
-                    # for j, dic in enumerate(paintings_matched):
-                    #     if j > self.array_max_lenght:
-                    #         break
-                    #     self.print_on_GUI(dic['im'], self.matched_array[j], dsize)
-                    #     self.matched_array[j].pack()
+                #Print the matched paintings
+                for j, dic in enumerate(paintings_matched):
+                    if j >= self.max_num_matched_paint:
+                        break
+                    self.print_on_GUI(dic['im'], self.matched_array[j], self.matched_dim)
 
-                    # uncomment the following lines when it's possibile to display rectified images un GUI
-                    # for j, image in enumerate(rectified_images):
-                    #     if j > self.array_max_lenght:
-                    #         break
-                    #     self.print_on_GUI(image, self.rectified_array[j], dsize)
+                #display rectified images un GUI
+                for j, image in enumerate(rectified_images):
+                    if j >= self.max_num_rect_paint:
+                        break
+                    self.print_on_GUI(image, self.rectified_array[j], self.rectified_dim)
 
-                    for i, box in enumerate(bounding_boxes0):
-                        box_string = ""
-                        for j in range(3):
-                            box_string += str(box[j]) + ","
-                        box_string += str(box[3])
-                        file.write(str(counter) + "," + str(i) + "," + box_string + "\n")
 
-                    # if cv2.waitKey(25) & 0xFF == ord('q'):
-                    #     break
-                    # sleep because otherwise frames are displayed too rapidly
-                    # time.sleep(0.02)
-                    counter += 1
+                for i, box in enumerate(bounding_boxes0):
+                    box_string = ""
+                    for j in range(3):
+                        box_string += str(box[j]) + ","
+                    box_string += str(box[3])
+                    file.write(str(frame_counter) + "," + str(i) + "," + box_string + "\n")
+
+                # if cv2.waitKey(25) & 0xFF == ord('q'):
+                #     break
+                frame_counter += 1
+
             else:
                 break
 
@@ -214,19 +261,17 @@ class AnalyzerGUI:
         cap.release()
         cv2.destroyAllWindows()
         file.close()
-        self.rects_label_0.configure(image="")
-        self.rects_label_0.image = ""
+        self.video_label.configure(image="")
+        self.video_label.image = ""
         self.museum_map_label.configure(image="")
         self.museum_map_label.image = ""
-        #self.rects_label_1.configure(image="")
-        #self.rects_label_1.image = ""
         messagebox.showinfo("Info", "Video and csv file saved at location ./" + folder_name)
 
 
 
-    def print_on_GUI(self, frame, label, dsize):
+    def print_on_GUI(self, frame, label, out_video_dim):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(cv2.resize(frame, dsize))
+        img = Image.fromarray(cv2.resize(frame, out_video_dim))
         img = ImageTk.PhotoImage(image=img)
         label.forget()
         label.configure(image=img)
