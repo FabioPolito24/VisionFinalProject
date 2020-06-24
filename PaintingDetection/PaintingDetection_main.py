@@ -268,7 +268,6 @@ class AnalyzerGUI:
         messagebox.showinfo("Info", "Video and csv file saved at location ./" + folder_name)
 
 
-
     def print_on_GUI(self, frame, label, out_video_dim):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(cv2.resize(frame, out_video_dim))
@@ -276,7 +275,6 @@ class AnalyzerGUI:
         label.forget()
         label.configure(image=img)
         label.image = img
-
 
 
 if __name__ == "__main__":

@@ -147,7 +147,8 @@ def rectification(frame, list_kp, shape):
 
 
 MAX_FEATURES = 500
-GOOD_MATCH_PERCENT = 0.15
+GOOD_MATCH_PERCENT = 0.10
+MIN_MATCHES = 10
 
 
 def alignImages(im1, im2):
@@ -168,10 +169,12 @@ def alignImages(im1, im2):
     # Remove not so good matches
     numGoodMatches = int(len(matches) * GOOD_MATCH_PERCENT)
     matches = matches[:numGoodMatches]
+    if len(matches) < MIN_MATCHES:
+        return None
     # Draw top matches
     imMatches = cv2.drawMatches(im1, keypoints1, im2, keypoints2, matches, None)
     # cv2.imwrite("matches.jpg", imMatches)
-    cv2.imshow('matches', imMatches)
+    cv2.imshow("Num good matches: " + str(len(matches)), imMatches)
     cv2.waitKey()
 
     # Extract location of good matches

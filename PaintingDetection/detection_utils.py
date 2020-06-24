@@ -3,10 +3,9 @@ import cv2
 import imutils
 import time
 
-from PaintingDetection.retrieval_utils import orb_features_matching
-from PaintingDetection.retrieval_utils import orb_features_matching_flann
+from PaintingDetection.retrieval_utils import orb_features_matching, PaintingsDB
 from PaintingDetection.pyimagesearch.transform import four_point_transform
-from rectification_utils import alignImages
+from PaintingDetection.rectification_utils import alignImages
 
 DELTA = 30
 LIGHT_FACTOR = 40
