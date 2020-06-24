@@ -39,11 +39,10 @@ class BackgroundTask:
             self.__bgTask_ = bgTask
 
         def run(self):
-            try:
-                self.__bgTask_.taskFuncPointer()(self.__bgTask_.isRunning)
-            except Exception as e:
-                messagebox.showerror("Error", repr(e))
-                # pass
+            # try:
+            self.__bgTask_.taskFuncPointer()(self.__bgTask_.isRunning)
+            # except Exception as e:
+            # messagebox.showerror("Error", repr(e))
             self.__bgTask_.stop()
 
 
@@ -97,13 +96,9 @@ class AnalyzerGUI:
         # --------- DB paintings initialization ---------
         PaintingsDB()
 
-
-
     def onThreadedClicked(self):
         try: self.bg_task.start()
         except: pass
-
-
 
     def analyze(self, isRunningFunc=None):
         cap = cv2.VideoCapture(self.entry.get())
@@ -141,28 +136,28 @@ class AnalyzerGUI:
                     height = int(frame.shape[0] * scale_percent / 100)
                     dsize = (width, height)
 
-                    #Detect People inside actual frame
+                    # Detect People inside actual frame
                     netOutput = self.peopleDetector.detectPeopleFromFrame(frame)
 
-                    #Detect painting inside actual frame
+                    # Detect painting inside actual frame
                     frameWithBB, bounding_boxes0, rectified_images0, paintings_matched = first_step(method_1(frame.copy()), frame.copy())
-                    #img_1, bounding_boxes1, rectified_images1 = first_step(method_2(frame.copy()), frame.copy())
-
+                    # img_1, bounding_boxes1, rectified_images1 = first_step(method_2(frame.copy()), frame.copy())
+                    
                     if len(netOutput.size()) > 0:
                         frameWithBB = self.peopleDetector.writLabels(frameWithBB, netOutput)
 
-                    #Append actual frame to build a video at the end of execution
+                    # Append actual frame to build a video at the end of execution
                     imgs.append(frameWithBB)
 
                     # Print actual frame on the gui
                     self.print_on_GUI(frameWithBB, self.rects_label_0, dsize)
                     # self.print_on_GUI(img_1, self.rects_label_1, dsize)
 
-                    #Print Map with actual room
+                    # Print Map with actual room
                     self.print_on_GUI(print_on_map(get_room("Sant'Antonio da Padova")), self.museum_map_label, dsize)
 
-                    #Print the matched paintings
-                    #Need to fix the representation on the GUI
+                    # Print the matched paintings
+                    # Need to fix the representation on the GUI
                     # for j, dic in enumerate(paintings_matched):
                     #     if j > self.array_max_lenght:
                     #         break

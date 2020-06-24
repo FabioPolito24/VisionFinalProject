@@ -3,10 +3,10 @@ import cv2
 import imutils
 import time
 
-from PaintingDetection.rectification_utils import houghLines
 from PaintingDetection.retrieval_utils import orb_features_matching
 from PaintingDetection.retrieval_utils import orb_features_matching_flann
 from PaintingDetection.pyimagesearch.transform import four_point_transform
+from rectification_utils import alignImages
 
 DELTA = 30
 LIGHT_FACTOR = 40
@@ -28,6 +28,7 @@ def bb_intersection_over_union(boxA, boxB):
 
 
 def first_step(edged, frame):
+    orig = frame.copy()
     contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     rects = np.ones([len(contours), ])
     bounding_boxes = []
@@ -59,22 +60,20 @@ def first_step(edged, frame):
                             else:
                                 rects[i] = 0
             if rects[i] == 1:
-                # questa funzione passa a second step il frame com la bounding box sopra, questo va rovinare processo di
-                # rettifica del quadro, era voluto?
                 cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
                 bounding_boxes.append((x0, y0, w0, h0))
-                ret, warped, top5 = second_step(frame[
-                                      max(0, y0-DELTA): min(frame.shape[0], y0+h0+DELTA),
-                                      max(0, x0-DELTA): min(frame.shape[1], x0+w0+DELTA),
+                ret, top5_matches, aligned_img = second_step(orig[
+                                      max(0, y0-DELTA): min(orig.shape[0], y0+h0+DELTA),
+                                      max(0, x0-DELTA): min(orig.shape[1], x0+w0+DELTA),
                                       :])
-                if len(top5) != 0:
-                    paintings_matched.append(top5[0])
-                if warped is not None:
-                    rectified_images.append(warped)
+                if len(top5_matches) != 0:
+                    paintings_matched.append(top5_matches[0])
+                if aligned_img is not None:
+                    rectified_images.append(aligned_img)
+
     return frame, bounding_boxes, rectified_images, paintings_matched
 
 
-# second step not working well if the painting doesn't have a rectangular shape
 def second_step(orig):
     ret = False
     orig = enlight(orig)
@@ -115,18 +114,25 @@ def second_step(orig):
     cnts = cv2.findContours(hsv_gray.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:10]
-
+    aligned_img = None
     # loop over the contours
     for c in cnts:
         if cv2.contourArea(c) < 45000:
             continue
         # approximate the contour
+
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
         x, y, w, h = cv2.boundingRect(c)
         # cv2.imshow('bb_cnt', img[y:y + h, x:x + w, :])
-        top_5_matches = orb_features_matching(img[y:y + h, x:x + w, :])
-        #   orb_features_matching_flann(img[y:y + h, x:x + w, :], db_paintings)
+        # cv2.waitKey()
+        top_5_matches, top_5_score = orb_features_matching(img[y:y + h, x:x + w, :])
+        if top_5_score.all():
+            if top_5_score[0] - top_5_score[1] > 4:
+                # rectification(img[y:y + h, x:x + w, :], top_5_matches[0]['list_kp'],
+                #               top_5_matches[0]['im'].shape[:2])
+                aligned_img = alignImages(img[y:y + h, x:x + w, :], top_5_matches[0]['im'])
+        # orb_features_matching_flann(img[y:y + h, x:x + w, :], db_paintings)
         # uncomment the following lines if you want to visualize the contours
         # canvas = black_img.copy()
         # cv2.drawContours(canvas, [approx], -1, (255, 255, 255), 1)
@@ -153,10 +159,7 @@ def second_step(orig):
         # cv2.waitKey(0)
     except:
         ret = False
-    try:
-        return ret, warped, top_5_matches
-    except:
-        return ret, None, top_5_matches
+    return ret, top_5_matches, aligned_img
 
 
 def enlight(rgb_img):

@@ -127,3 +127,65 @@ def rectify(frame, contour):
         im_c = cv2.warpPerspective(frame, h, (W, H), flags=cv2.WARP_INVERSE_MAP)
 
         return im_c
+
+
+def rectification(frame, list_kp, shape):
+    cv2.imshow('frame', frame)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    numbers = frame.copy()
+    for i, kp in enumerate([(x1, y1) for ((x1, y1), _) in list_kp][:8]):
+        cv2.putText(numbers, str(i), kp, font, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.imshow('kp', numbers)
+    cv2.waitKey()
+    pts1 = np.array([(x1, y1) for ((x1, y1), _) in list_kp][:8]).astype('float32')
+    pts2 = np.array([(x2, y2) for (_, (x2, y2)) in list_kp][:8]).astype('float32')
+    h, _ = cv2.findHomography(pts2, pts1)
+    im_c = cv2.warpPerspective(frame, h, shape[::-1])  # flags=cv2.WARP_INVERSE_MAP)
+    cv2.imshow('warped', im_c)
+    cv2.waitKey()
+    return im_c
+
+
+MAX_FEATURES = 500
+GOOD_MATCH_PERCENT = 0.15
+
+
+def alignImages(im1, im2):
+    # Convert images to grayscale
+    im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
+    im2Gray = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
+    # Detect ORB features and compute descriptors.
+    orb = cv2.ORB_create(MAX_FEATURES)
+
+    keypoints1, descriptors1 = orb.detectAndCompute(im1Gray, None)
+    keypoints2, descriptors2 = orb.detectAndCompute(im2Gray, None)
+    # Match features.
+    matcher = cv2.DescriptorMatcher_create(cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
+    matches = matcher.match(descriptors1, descriptors2, None)
+
+    # Sort matches by score
+    matches.sort(key=lambda x: x.distance, reverse=False)
+    # Remove not so good matches
+    numGoodMatches = int(len(matches) * GOOD_MATCH_PERCENT)
+    matches = matches[:numGoodMatches]
+    # Draw top matches
+    imMatches = cv2.drawMatches(im1, keypoints1, im2, keypoints2, matches, None)
+    # cv2.imwrite("matches.jpg", imMatches)
+    cv2.imshow('matches', imMatches)
+    cv2.waitKey()
+
+    # Extract location of good matches
+    points1 = np.zeros((len(matches), 2), dtype=np.float32)
+    points2 = np.zeros((len(matches), 2), dtype=np.float32)
+
+    for i, match in enumerate(matches):
+        points1[i, :] = keypoints1[match.queryIdx].pt
+        points2[i, :] = keypoints2[match.trainIdx].pt
+    # Find and use homography
+    h, _ = cv2.findHomography(points1, points2, cv2.RANSAC)
+    height, width, channels = im2.shape
+    im1Reg = cv2.warpPerspective(im1, h, (width, height))
+    cv2.imshow('aligned', im1Reg)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+    return im1Reg
