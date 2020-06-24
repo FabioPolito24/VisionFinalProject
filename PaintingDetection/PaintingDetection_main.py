@@ -155,7 +155,7 @@ class AnalyzerGUI:
                     # self.print_on_GUI(img_1, self.rects_label_1, dsize)
 
                     # Print Map with actual room
-                    self.print_on_GUI(print_on_map(get_room("Sant'Antonio da Padova")), self.museum_map_label, dsize)
+                    self.print_on_GUI(print_on_map(get_room("017.png")), self.museum_map_label, dsize)
 
                     # Print the matched paintings
                     # Need to fix the representation on the GUI
