@@ -62,7 +62,7 @@ def first_step(edged, frame):
             if rects[i] == 1 and check_roi(frame[y0:y0 + h0, x0:x0 + w0]):
                 cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
                 bounding_boxes.append((x0, y0, w0, h0))
-                ret, top5_matches, aligned_img = second_step(orig[
+                ret, top5_matches, aligned_img, _ = second_step(orig[
                                       max(0, y0-DELTA): min(orig.shape[0], y0+h0+DELTA),
                                       max(0, x0-DELTA): min(orig.shape[1], x0+w0+DELTA),
                                       :])
@@ -76,14 +76,15 @@ def first_step(edged, frame):
 
 def second_step(orig):
     ret = False
+    mask = None
     orig = enlight(orig)
     ratio = orig.shape[0] / 500.0
-    black_img = np.zeros(orig.shape)
+    black_img = np.zeros_like(orig)
     img = imutils.resize(orig, height=500)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     # cv2.imshow('HSV', hsv)
     # cv2.imshow('RGB', orig)
-    # cv2.waitKey()
+    cv2.waitKey()
     # rgb_gray image has the only purpose to visualize the differences between rgb and hsv
     # rgb_gray = preprocessing(img)
     hsv_gray = preprocessing(hsv)
@@ -120,7 +121,6 @@ def second_step(orig):
         if cv2.contourArea(c) < 45000:
             continue
         # approximate the contour
-
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
         x, y, w, h = cv2.boundingRect(c)
@@ -129,15 +129,14 @@ def second_step(orig):
         top_5_matches, top_5_score = orb_features_matching(img[y:y + h, x:x + w, :])
         if top_5_score.all():
             if top_5_score[0] - top_5_score[1] > 4:
-                # rectification(img[y:y + h, x:x + w, :], top_5_matches[0]['list_kp'],
-                #               top_5_matches[0]['im'].shape[:2])
                 aligned_img = alignImages(img[y:y + h, x:x + w, :], top_5_matches[0]['im'])
         # orb_features_matching_flann(img[y:y + h, x:x + w, :], db_paintings)
         # uncomment the following lines if you want to visualize the contours
-        # canvas = black_img.copy()
-        # cv2.drawContours(canvas, [approx], -1, (255, 255, 255), 1)
-        # cv2.imshow("Outline only", canvas[:, :, 0])
+        canvas = black_img.copy()
+        cv2.drawContours(canvas, [approx], -1, (255, 255, 255), -1)
+        # cv2.imshow("Outline only", canvas)
         # cv2.waitKey(0)
+        mask = (canvas == 255).all(axis=2)
         # if our approximated contour has four points, then we
         # can assume that we have found our painting
         if len(approx) == 4:
@@ -149,17 +148,17 @@ def second_step(orig):
         cv2.drawContours(img, [screenCnt], -1, (255, 0, 0), 15)
         # cv2.imshow("Outline", img)
         # cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.destroyAllWindows()
         # apply the four point transform to obtain a top-down view of the painting
         keypoints = screenCnt.reshape(4, 2)
-        warped = four_point_transform(orig, keypoints * ratio)
+        aligned_img = four_point_transform(orig, keypoints * ratio)
         # show both original and rectified images
         # cv2.imshow("Original", imutils.resize(orig, height=500))
-        # cv2.imshow("Warped", imutils.resize(warped, height=500))
-        # cv2.waitKey(0)
+        # cv2.imshow("Warped", imutils.resize(aligned_img, height=500))
+        # cv2.waitKey()
     except:
         ret = False
-    return ret, top_5_matches, aligned_img
+    return ret, top_5_matches, aligned_img, mask
 
 
 def enlight(rgb_img):
