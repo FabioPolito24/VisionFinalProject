@@ -6,6 +6,7 @@ import numpy as np
 from cv2 import VideoWriter_fourcc
 from tkinter import messagebox, Label, Entry, Button, Tk, Frame, LabelFrame
 from PIL import Image, ImageTk
+import pyscreenshot as ImageGrab
 from PaintingDetection.detection_utils import *
 from PaintingDetection.retrieval_utils import *
 from PaintingDetection.rectification_utils import *
@@ -91,9 +92,9 @@ class AnalyzerGUI:
         self.video_label.grid(row=1,column=0)
 
         # --------- Museum Map container ---------
-        self.museum_map_dimension = (int(self.window_width / 3), int(self.window_height / 2))
+        self.museum_map_dim = (int(self.window_width / 3), int(self.window_height / 2))
         self.museum_map_label = Label(self.master, image="")
-        frame = np.zeros((self.museum_map_dimension[1], self.museum_map_dimension[0], 3), dtype=np.uint8)
+        frame = np.zeros((self.museum_map_dim[1], self.museum_map_dim[0], 3), dtype=np.uint8)
         img = Image.fromarray(frame, 'RGB')
         img = ImageTk.PhotoImage(image=img)
         self.museum_map_label.configure(image=img)
@@ -178,7 +179,7 @@ class AnalyzerGUI:
             else:
                 scale_percent = int(height / self.out_video_dim[0])
             self.out_video_dim = (int(width / scale_percent), int(height / scale_percent))
-            self.museum_map_dimension = ( self.out_video_dim[0], self.out_video_dim[1])
+            self.museum_map_dim = ( self.out_video_dim[0], self.out_video_dim[1])
 
         imgs = []
         frame_counter = 0
@@ -190,29 +191,26 @@ class AnalyzerGUI:
                 netOutput = self.peopleDetector.detectPeopleFromFrame(frame)
 
                 #Detect painting inside actual frame
-                frameWithBB, bounding_boxes0, rectified_images, paintings_matched = first_step(method_1(frame.copy()), frame.copy())
+                frameWithBB, bounding_boxes, rectified_images, paintings_matched = first_step(method_1(frame.copy()), frame.copy())
 
                 #Put people localized on the frame
                 if netOutput != None:
                     frameWithBB = self.peopleDetector.writLabels(frameWithBB, netOutput)
-
-                #Append actual frame to build a video at the end of execution
-                imgs.append(frameWithBB)
 
                 # Print actual video frame on the gui
                 self.print_on_GUI(frameWithBB, self.video_label, self.out_video_dim)
 
                 # just some testing to create the db for svm
                 # if frame_counter % 100 == 0:
-                #     for box in bounding_boxes0:
+                #     for box in bounding_boxes:
                 #         label_hist(frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]])
 
                 #Print Map with actual room
                 if len(paintings_matched) != 0:
                     id = os.path.basename(os.path.normpath(paintings_matched[0]['filename']))
-                    self.print_on_GUI(print_on_map(get_room(id)), self.museum_map_label, self.museum_map_dimension)
+                    self.print_on_GUI(print_on_map(get_room(id)), self.museum_map_label, self.museum_map_dim)
                 else:
-                    self.print_on_GUI(print_on_map(''), self.museum_map_label, self.museum_map_dimension)
+                    self.print_on_GUI(print_on_map(''), self.museum_map_label, self.museum_map_dim)
 
                 #Print the matched paintings
                 for j, dic in enumerate(paintings_matched):
@@ -226,7 +224,8 @@ class AnalyzerGUI:
                         break
                     self.print_on_GUI(image, self.rectified_array[j], self.rectified_dim)
 
-                for i, box in enumerate(bounding_boxes0):
+
+                for i, box in enumerate(bounding_boxes):
                     box_string = ""
                     for j in range(3):
                         box_string += str(box[j]) + ","
@@ -235,22 +234,28 @@ class AnalyzerGUI:
 
                 # if cv2.waitKey(25) & 0xFF == ord('q'):
                 #     break
+
+                #Append actual frame to create a video at the end
+                imgs.append(self.get_screenshot())
+
                 frame_counter += 1
 
             else:
                 break
 
+        #Try to build a video of the entire video analyzer
         try:
             height, width, layers = imgs[1].shape
             fourcc = VideoWriter_fourcc(*'MP42')
-            video = cv2.VideoWriter(folder_name + "/video.avi", fourcc, 24, (width, height))
+            video = cv2.VideoWriter(folder_name + "/video.avi", fourcc, 15, (width, height))
             for j in range(len(imgs)):
                 video.write(imgs[j])
             video.release()
+            messagebox.showinfo("Info", "Video and csv file saved at location ./" + folder_name)
         except:
             print('Video build failed')
 
-        messagebox.showinfo("Info", "Video and csv file saved at location ./" + folder_name)
+        #Close interface
         cap.release()
         file.close()
         self.delete_GUI_imgs()
@@ -272,6 +277,14 @@ class AnalyzerGUI:
             self.rectified_array[i].forget()
         for i in range(self.max_num_matched_paint):
             self.matched_array[i].forget()
+
+    def get_screenshot(self):
+        x = self.master.winfo_rootx()
+        y = self.master.winfo_rooty()
+        xx = x + self.master.winfo_width()
+        yy = y + self.master.winfo_height()
+        return cv2.cvtColor(np.array(ImageGrab.grab(bbox=(x, y, xx, yy)).convert('RGB')), cv2.COLOR_RGB2BGR)
+
 
 
 if __name__ == "__main__":
