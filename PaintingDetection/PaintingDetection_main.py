@@ -132,7 +132,7 @@ class AnalyzerGUI:
             self.matched_array[i].grid(row=i, column=0)
 
         # --------- People detector (YoloV3) ---------
-        self.peopleDetector = PeopleDetector()
+        self.peopleDetector = PeopleDetector(confidence=0.6)
 
         # --------- Background Task ---------
         self.bg_task = BackgroundTask(self.analyze)
@@ -195,7 +195,7 @@ class AnalyzerGUI:
 
                 #Put people localized on the frame
                 if netOutput != None:
-                    frameWithBB = self.peopleDetector.writLabels(frameWithBB, netOutput)
+                    frameWithBB = self.peopleDetector.writLabels(frameWithBB, netOutput, bounding_boxes)
 
                 # Print actual video frame on the gui
                 self.print_on_GUI(frameWithBB, self.video_label, self.out_video_dim)
