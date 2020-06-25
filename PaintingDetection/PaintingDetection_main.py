@@ -12,7 +12,7 @@ from PaintingDetection.rectification_utils import *
 from PaintingDetection.general_utils import *
 from PeopleLocalization.peopleLocalizator import *
 from yolo.people_detector import *
-from svm.dbCreator import label_hist
+from svm.ROI_classificator import *
 
 class BackgroundTask:
     def __init__(self, taskFuncPointer):
@@ -142,6 +142,9 @@ class AnalyzerGUI:
         # --------- DB paintings initialization ---------
         PaintingsDB()
 
+        # --------- SVM classifier initialization ---------
+        clf_svm()
+
     def onThreadedClicked(self):
         try: self.bg_task.start()
         except: pass
@@ -209,9 +212,9 @@ class AnalyzerGUI:
 
                 #Print Map with actual room
                 # TODO update last_paint_matched variable
-                if len(paintings_matched) > 1:
-                    room = get_room(paintings_matched[0]['filename'].split('/')[-1])
-                    self.print_on_GUI(print_on_map(room), self.museum_map_label, self.museum_map_dimension)
+                # if len(paintings_matched) > 1:
+                #     room = get_room(paintings_matched[0]['filename'].split('/')[-1])
+                #     self.print_on_GUI(print_on_map(room), self.museum_map_label, self.museum_map_dimension)
                     #self.last_paint_matched = "La Carità romana"
                 #self.print_on_GUI(print_on_map(get_room(self.last_paint_matched)), self.museum_map_label, self.museum_map_dimension)
                 

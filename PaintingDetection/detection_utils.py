@@ -6,6 +6,7 @@ import time
 from PaintingDetection.retrieval_utils import orb_features_matching, PaintingsDB
 from PaintingDetection.pyimagesearch.transform import four_point_transform
 from PaintingDetection.rectification_utils import alignImages
+from svm.ROI_classificator import check_roi
 
 DELTA = 30
 LIGHT_FACTOR = 40
@@ -58,7 +59,7 @@ def first_step(edged, frame):
                                 rects[j] = 0
                             else:
                                 rects[i] = 0
-            if rects[i] == 1:
+            if rects[i] == 1 and check_roi(frame[y0:y0 + h0, x0:x0 + w0]):
                 cv2.rectangle(frame, (x0, y0), (x0 + w0, y0 + h0), (0, 255, 0), 2)
                 bounding_boxes.append((x0, y0, w0, h0))
                 ret, top5_matches, aligned_img = second_step(orig[
