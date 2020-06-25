@@ -45,7 +45,6 @@ class BackgroundTask:
             #     messagebox.showerror("Error", repr(e))
             self.__bgTask_.stop()
 
-
 class AnalyzerGUI:
     def __init__(self, master, width = 1200, height = 800):
         self.master = master
@@ -53,7 +52,7 @@ class AnalyzerGUI:
         self.window_height = height
         self.master.geometry(str(width) + "x" + str(height))
         self.master.title("Video Analyzer")
-        self.last_paint_matched = "Sant'Antonio da Padova"
+
         '''
         Gui format: 1200 x 800
         rectified.. and matched..  each 400x200
@@ -101,7 +100,6 @@ class AnalyzerGUI:
         self.museum_map_label.image = img
         self.museum_map_label.grid(row=2, column=0)
 
-
         # --------- Rectified paintings frame and container ---------
         # ToDo: print rectified images on GUI
         self.rect_paint_frame = LabelFrame(self.master, text="Rectified Paintings")
@@ -116,7 +114,6 @@ class AnalyzerGUI:
             self.rectified_array[i].configure(image=img)
             self.rectified_array[i].image = img
             self.rectified_array[i].grid(row=i, column=0)
-
 
         # --------- Matched paintings frame and container ---------
         # ToDo: print matched images on GUI
@@ -211,19 +208,11 @@ class AnalyzerGUI:
                 #         label_hist(frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]])
 
                 #Print Map with actual room
-                # TODO update last_paint_matched variable
-                # if len(paintings_matched) > 1:
-                #     room = get_room(paintings_matched[0]['filename'].split('/')[-1])
-                #     self.print_on_GUI(print_on_map(room), self.museum_map_label, self.museum_map_dimension)
-                    #self.last_paint_matched = "La Carità romana"
-                #self.print_on_GUI(print_on_map(get_room(self.last_paint_matched)), self.museum_map_label, self.museum_map_dimension)
-                
-                #if len(paintings_matched) != 0:
-                #    id = os.path.basename(os.path.normpath(paintings_matched[0]['filename']))
-                #    self.print_on_GUI(print_on_map(get_room(id)), self.museum_map_label, self.museum_map_dimension)
-                #else:
-                #    self.print_on_GUI(print_on_map(''), self.museum_map_label, self.museum_map_dimension)
-
+                if len(paintings_matched) != 0:
+                    id = os.path.basename(os.path.normpath(paintings_matched[0]['filename']))
+                    self.print_on_GUI(print_on_map(get_room(id)), self.museum_map_label, self.museum_map_dimension)
+                else:
+                    self.print_on_GUI(print_on_map(''), self.museum_map_label, self.museum_map_dimension)
 
                 #Print the matched paintings
                 for j, dic in enumerate(paintings_matched):
@@ -236,7 +225,6 @@ class AnalyzerGUI:
                     if j >= self.max_num_rect_paint:
                         break
                     self.print_on_GUI(image, self.rectified_array[j], self.rectified_dim)
-
 
                 for i, box in enumerate(bounding_boxes0):
                     box_string = ""
@@ -262,14 +250,11 @@ class AnalyzerGUI:
         except:
             print('Video build failed')
 
-        cap.release()
-        cv2.destroyAllWindows()
-        file.close()
-        self.video_label.configure(image="")
-        self.video_label.image = ""
-        self.museum_map_label.configure(image="")
-        self.museum_map_label.image = ""
         messagebox.showinfo("Info", "Video and csv file saved at location ./" + folder_name)
+        cap.release()
+        file.close()
+        self.delete_GUI_imgs()
+        cv2.destroyAllWindows()
 
 
     def print_on_GUI(self, frame, label, out_video_dim):
@@ -279,6 +264,14 @@ class AnalyzerGUI:
         label.forget()
         label.configure(image=img)
         label.image = img
+
+    def delete_GUI_imgs(self):
+        self.video_label.forget()
+        self.museum_map_label.forget()
+        for i in range(self.max_num_rect_paint):
+            self.rectified_array[i].forget()
+        for i in range(self.max_num_matched_paint):
+            self.matched_array[i].forget()
 
 
 if __name__ == "__main__":
