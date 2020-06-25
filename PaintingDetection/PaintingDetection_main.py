@@ -42,7 +42,7 @@ class BackgroundTask:
             # try:
             self.__bgTask_.taskFuncPointer()(self.__bgTask_.isRunning)
             # except Exception as e:
-            # messagebox.showerror("Error", repr(e))
+            #     messagebox.showerror("Error", repr(e))
             self.__bgTask_.stop()
 
 
@@ -209,9 +209,10 @@ class AnalyzerGUI:
 
                 #Print Map with actual room
                 # TODO update last_paint_matched variable
-                # TODO scoprire errore dentro al get_room
-                self.print_on_GUI(print_on_map(2), self.museum_map_label, self.museum_map_dimension)
-                #self.last_paint_matched = "La Carità romana"
+                if len(paintings_matched) > 1:
+                    room = get_room(paintings_matched[0]['filename'].split('/')[-1])
+                    self.print_on_GUI(print_on_map(room), self.museum_map_label, self.museum_map_dimension)
+                    #self.last_paint_matched = "La Carità romana"
                 #self.print_on_GUI(print_on_map(get_room(self.last_paint_matched)), self.museum_map_label, self.museum_map_dimension)
                 
                 #if len(paintings_matched) != 0:

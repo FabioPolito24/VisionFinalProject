@@ -174,8 +174,8 @@ def alignImages(im1, im2):
     # Draw top matches
     imMatches = cv2.drawMatches(im1, keypoints1, im2, keypoints2, matches, None)
     # cv2.imwrite("matches.jpg", imMatches)
-    cv2.imshow("Num good matches: " + str(len(matches)), imMatches)
-    cv2.waitKey()
+    # cv2.imshow("Num good matches: " + str(len(matches)), imMatches)
+    # cv2.waitKey()
 
     # Extract location of good matches
     points1 = np.zeros((len(matches), 2), dtype=np.float32)
@@ -188,7 +188,7 @@ def alignImages(im1, im2):
     h, _ = cv2.findHomography(points1, points2, cv2.RANSAC)
     height, width, channels = im2.shape
     im1Reg = cv2.warpPerspective(im1, h, (width, height))
-    cv2.imshow('aligned', im1Reg)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+    # cv2.imshow('aligned', im1Reg)
+    # cv2.waitKey()
+    # cv2.destroyAllWindows()
     return im1Reg
