@@ -67,8 +67,10 @@ def first_step(edged, frame):
                                       max(0, x0-DELTA): min(orig.shape[1], x0+w0+DELTA),
                                       :])
                 if len(top5_matches) != 0:
+                    # Questo aggiunge sempre alla lista?
                     paintings_matched.append(top5_matches[0])
                 if aligned_img is not None:
+                    # Questo aggiunge solo se è stato trovato un match considerato valido?
                     rectified_images.append(aligned_img)
 
     return frame, bounding_boxes, rectified_images, paintings_matched
@@ -128,7 +130,7 @@ def second_step(orig):
         # cv2.waitKey()
         top_5_matches, top_5_score = orb_features_matching(img[y:y + h, x:x + w, :])
         if top_5_score.all():
-            if top_5_score[0] - top_5_score[1] > 4:
+            if top_5_score[0] - top_5_score.mean() > np.ceil(top_5_score.mean() / 3):
                 aligned_img = alignImages(img[y:y + h, x:x + w, :], top_5_matches[0]['im'])
         # orb_features_matching_flann(img[y:y + h, x:x + w, :], db_paintings)
         # uncomment the following lines if you want to visualize the contours

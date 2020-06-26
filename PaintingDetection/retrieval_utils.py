@@ -48,7 +48,7 @@ def orb_features_matching(im):
         list_kp = []
         for m, n in matches:
             # as the hyperparameter get closer to 1, more key points will be matched
-            if m.distance < 0.70 * n.distance:
+            if m.distance < 0.75 * n.distance:
                 # good.append([m, n])
                 good.append([m])
                 # Get the matching keypoints for each of the images
