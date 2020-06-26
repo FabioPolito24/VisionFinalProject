@@ -9,7 +9,7 @@ from sklearn import svm
 class clf_svm:
     class __clf_svm:
         def __init__(self):
-            with open('../svm/model.pickle', 'rb') as model_file:
+            with open('svm/model.pickle', 'rb') as model_file:
 
                 self.clf = pickle.load(model_file)
 

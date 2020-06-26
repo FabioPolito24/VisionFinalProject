@@ -10,6 +10,7 @@ __pycache__/
 
 # Our Outputs
 */outputs/
+outputs/
 
 #yolo weight too big for github
 *.weights

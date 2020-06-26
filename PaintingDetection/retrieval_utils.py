@@ -8,7 +8,7 @@ DEBUG = False
 class PaintingsDB:
     class __PaintingsDB:
         def __init__(self):
-            with open('../paintings_db/db_paintings.pickle', 'rb') as db_paintings_file:
+            with open('paintings_db/db_paintings.pickle', 'rb') as db_paintings_file:
 
                 self.paintings = pickle.load(db_paintings_file)
 

@@ -14,7 +14,7 @@ from yolo.darknet import Darknet
 '''
 
 class PeopleDetector:
-    def __init__(self, confidence = 0.5, nms_thresh = 0.4, resolution = 416, weights_path = '../yolo/weights/yolov3.weights', cfg_path = '../yolo/cfg/yolov3.cfg', num_classes = 80, names_path = '../yolo/data/coco.names'):
+    def __init__(self, confidence = 0.5, nms_thresh = 0.4, resolution = 416, weights_path = 'yolo/weights/yolov3.weights', cfg_path = 'yolo/cfg/yolov3.cfg', num_classes = 80, names_path = 'yolo/data/coco.names'):
         self.confidence = confidence
         self.nms_thesh = nms_thresh
         self.weightsfile = weights_path

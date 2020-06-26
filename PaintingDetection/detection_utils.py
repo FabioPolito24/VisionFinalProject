@@ -66,18 +66,19 @@ def first_step(edged, frame):
                                       max(0, y0-DELTA): min(orig.shape[0], y0+h0+DELTA),
                                       max(0, x0-DELTA): min(orig.shape[1], x0+w0+DELTA),
                                       :])
-                if len(top5_matches) != 0:
-                    # Questo aggiunge sempre alla lista?
+                if ret == 0:
                     paintings_matched.append(top5_matches[0])
-                if aligned_img is not None:
-                    # Questo aggiunge solo se è stato trovato un match considerato valido?
                     rectified_images.append(aligned_img)
-
+                if ret == 1:
+                    rectified_images.append(aligned_img)
     return frame, bounding_boxes, rectified_images, paintings_matched
 
 
 def second_step(orig):
-    ret = False
+    # if ret==0 --> both aligned image and db painting found
+    # if ret==1 --> only aligned image found
+    # if ret==2 --> nothing found
+    ret = 2
     mask = None
     orig = enlight(orig)
     ratio = orig.shape[0] / 500.0
@@ -132,6 +133,7 @@ def second_step(orig):
         if top_5_score.all():
             if top_5_score[0] - top_5_score.mean() > np.ceil(top_5_score.mean() / 3):
                 aligned_img = alignImages(img[y:y + h, x:x + w, :], top_5_matches[0]['im'])
+                ret = 0
         # orb_features_matching_flann(img[y:y + h, x:x + w, :], db_paintings)
         # uncomment the following lines if you want to visualize the contours
         canvas = black_img.copy()
@@ -142,7 +144,8 @@ def second_step(orig):
         # if our approximated contour has four points, then we
         # can assume that we have found our painting
         if len(approx) == 4:
-            ret = True
+            if ret == 2:
+                ret = 1
             screenCnt = approx
             break
     try:
@@ -159,7 +162,7 @@ def second_step(orig):
         # cv2.imshow("Warped", imutils.resize(aligned_img, height=500))
         # cv2.waitKey()
     except:
-        ret = False
+        pass
     return ret, top_5_matches, aligned_img, mask
 
 

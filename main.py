@@ -1,19 +1,15 @@
-import cv2
 import threading
-import time
 import os
-import numpy as np
 from cv2 import VideoWriter_fourcc
-from tkinter import messagebox, Label, Entry, Button, Tk, Frame, LabelFrame
+from tkinter import messagebox, Label, Entry, Button, Tk, LabelFrame
 from PIL import Image, ImageTk
 import pyscreenshot as ImageGrab
 from PaintingDetection.detection_utils import *
 from PaintingDetection.retrieval_utils import *
-from PaintingDetection.rectification_utils import *
-from PaintingDetection.general_utils import *
 from PeopleLocalization.peopleLocalizator import *
 from yolo.people_detector import *
 from svm.ROI_classificator import *
+
 
 class BackgroundTask:
     def __init__(self, taskFuncPointer):
@@ -46,6 +42,7 @@ class BackgroundTask:
             #     messagebox.showerror("Error", repr(e))
             self.__bgTask_.stop()
 
+
 class AnalyzerGUI:
     def __init__(self, master, width = 1200, height = 800):
         self.master = master
@@ -75,7 +72,7 @@ class AnalyzerGUI:
         self.play_frame.grid(row=0,column=0)
         #Path to video
         self.entry = Entry(self.play_frame)
-        self.entry.insert(0, "../videos/vid001.MP4")
+        self.entry.insert(0, "videos/vid001.MP4")
         self.entry.grid(row=0, column=0)
         #Play Button
         self.play_Button = Button(self.play_frame, text="Play", command=self.onThreadedClicked)
@@ -170,7 +167,7 @@ class AnalyzerGUI:
             print("Error creating file for solution")
             return
 
-        #Calculate size for output video, preserving format
+        # Calculate size for output video, preserving format
         if cap.isOpened():
             width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
@@ -187,13 +184,13 @@ class AnalyzerGUI:
             ret, frame = cap.read()
             if ret:
 
-                #Detect People inside actual frame
+                # Detect People inside actual frame
                 netOutput = self.peopleDetector.detectPeopleFromFrame(frame)
 
-                #Detect painting inside actual frame
+                # Detect painting inside actual frame
                 frameWithBB, bounding_boxes, rectified_images, paintings_matched = first_step(method_1(frame.copy()), frame.copy())
 
-                #Put people localized on the frame
+                # Put people localized on the frame
                 if netOutput != None:
                     frameWithBB = self.peopleDetector.writLabels(frameWithBB, netOutput, bounding_boxes)
 
@@ -205,25 +202,24 @@ class AnalyzerGUI:
                 #     for box in bounding_boxes:
                 #         label_hist(frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]])
 
-                #Print Map with actual room
+                # Print Map with actual room
                 if len(paintings_matched) != 0:
                     id = os.path.basename(os.path.normpath(paintings_matched[0]['filename']))
                     self.print_on_GUI(print_on_map(get_room(id)), self.museum_map_label, self.museum_map_dim)
                 else:
                     self.print_on_GUI(print_on_map(''), self.museum_map_label, self.museum_map_dim)
 
-                #Print the matched paintings
+                # Print the matched paintings
                 for j, dic in enumerate(paintings_matched):
                     if j >= self.max_num_matched_paint:
                         break
                     self.print_on_GUI(dic['im'], self.matched_array[j], self.matched_dim)
 
-                #display rectified images un GUI
+                # display rectified images un GUI
                 for j, image in enumerate(rectified_images):
                     if j >= self.max_num_rect_paint:
                         break
                     self.print_on_GUI(image, self.rectified_array[j], self.rectified_dim)
-
 
                 for i, box in enumerate(bounding_boxes):
                     box_string = ""
@@ -235,7 +231,7 @@ class AnalyzerGUI:
                 # if cv2.waitKey(25) & 0xFF == ord('q'):
                 #     break
 
-                #Append actual frame to create a video at the end
+                # Append actual frame to create a video at the end
                 imgs.append(self.get_screenshot())
 
                 frame_counter += 1
@@ -243,7 +239,7 @@ class AnalyzerGUI:
             else:
                 break
 
-        #Try to build a video of the entire video analyzer
+        # Try to build a video of the entire video analyzer
         try:
             height, width, layers = imgs[1].shape
             fourcc = VideoWriter_fourcc(*'MP42')
@@ -255,20 +251,27 @@ class AnalyzerGUI:
         except:
             print('Video build failed')
 
-        #Close interface
+        # Close interface
         cap.release()
         file.close()
         self.delete_GUI_imgs()
         cv2.destroyAllWindows()
 
-
     def print_on_GUI(self, frame, label, out_video_dim):
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(cv2.resize(frame, out_video_dim))
-        img = ImageTk.PhotoImage(image=img)
-        label.forget()
-        label.configure(image=img)
-        label.image = img
+        try:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(cv2.resize(frame, out_video_dim))
+            img = ImageTk.PhotoImage(image=img)
+            label.forget()
+            label.configure(image=img)
+            label.image = img
+        except:
+            frame = np.zeros((self.rectified_dim[1], self.rectified_dim[0], 3), dtype=np.uint8)
+            img = Image.fromarray(frame, 'RGB')
+            img = ImageTk.PhotoImage(image=img)
+            label.forget()
+            label.configure(image=img)
+            label.image = img
 
     def delete_GUI_imgs(self):
         self.video_label.forget()
@@ -284,7 +287,6 @@ class AnalyzerGUI:
         xx = x + self.master.winfo_width()
         yy = y + self.master.winfo_height()
         return cv2.cvtColor(np.array(ImageGrab.grab(bbox=(x, y, xx, yy)).convert('RGB')), cv2.COLOR_RGB2BGR)
-
 
 
 if __name__ == "__main__":
