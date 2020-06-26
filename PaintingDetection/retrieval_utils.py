@@ -34,7 +34,7 @@ def orb_features_matching(im):
     db_paintings = PaintingsDB().get_db()
     orb = cv2.ORB_create()
     top_5_im = [{'im': None, 'filename': None, 'score': None}] * 5
-    top_5_score = np.full((5,), -1)
+    top_5_scores = np.full((5,), -1)
     # total = 0
     kp1, des1 = orb.detectAndCompute(im, None)
     for painting in db_paintings:
@@ -45,35 +45,24 @@ def orb_features_matching(im):
         # Apply ratio test from D.Lowe in sift paper
         good = []
         # Initialize lists
-        list_kp = []
         for m, n in matches:
             # as the hyperparameter get closer to 1, more key points will be matched
             if m.distance < 0.75 * n.distance:
                 # good.append([m, n])
                 good.append([m])
-                # Get the matching keypoints for each of the images
-                img1_idx_m = m.queryIdx
-                img2_idx_m = m.trainIdx
-                # Get the coordinates
-                (x1, y1) = kp1[img1_idx_m].pt
-                x1 = round(x1)
-                y1 = round(y1)
-                (x2, y2) = painting['kp'][img2_idx_m].pt
-                x2 = round(x2)
-                y2 = round(y2)
-                # Append to each list
-                list_kp.append(((x1, y1), (x2, y2)))
+        print(len(good))
         # im_match = cv2.drawMatchesKnn(im, kp1, painting['im'], painting['kp'], good, None, flags=2)
         # cv2.imshow("matches", im_match)
         # cv2.waitKey()
         # total += len(good);
-        if len(good) > top_5_score.min():
-            top_5_im[top_5_score.argmin()] = {'im': painting['im'], 'filename': painting['filename'],
-                                              'score': len(good), 'list_kp': list_kp}
-            top_5_score[top_5_score.argmin()] = len(good)
+        if len(good) > top_5_scores.min():
+            top_5_im[top_5_scores.argmin()] = {'im': painting['im'], 'filename': painting['filename'],
+                                               'score': len(good)}
+            top_5_scores[top_5_scores.argmin()] = len(good)
 
     # Sort the best 5 matches found
     top_5_match = sorted(top_5_im, key=lambda k: k['score'], reverse=True)
+    top_5_scores = sorted(top_5_scores, reverse=True)
     # print("--- %s seconds ---" % (time.time() - start_time))
 
     # Some useful information to understand the result of the function
@@ -87,7 +76,7 @@ def orb_features_matching(im):
     # print("mean score =   " + str(total / 95))
     # cv2.waitKey()
     # cv2.destroyAllWindows()
-    return top_5_match, top_5_score
+    return top_5_match, top_5_scores
 
 
 # Use flann matcher but doesn't work, sometimes the knnMatch doesn't return 2 value and I don't know why

@@ -74,20 +74,21 @@ def first_step(edged, frame):
     return frame, bounding_boxes, rectified_images, paintings_matched
 
 
-def second_step(orig):
+def second_step(orig, light=True):
     # if ret==0 --> both aligned image and db painting found
     # if ret==1 --> only aligned image found
     # if ret==2 --> nothing found
     ret = 2
     mask = None
-    orig = enlight(orig)
+    if light:
+        orig = enlight(orig)
     ratio = orig.shape[0] / 500.0
     black_img = np.zeros_like(orig)
     img = imutils.resize(orig, height=500)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     # cv2.imshow('HSV', hsv)
     # cv2.imshow('RGB', orig)
-    cv2.waitKey()
+    # cv2.waitKey()
     # rgb_gray image has the only purpose to visualize the differences between rgb and hsv
     # rgb_gray = preprocessing(img)
     hsv_gray = preprocessing(hsv)
@@ -101,7 +102,6 @@ def second_step(orig):
 
     # Initialize the list that will contain the best 5 paintings matching
     top_5_matches = []
-
     # sometimes the background has been filled with 255 and the painting with 0
     # the following code make sure that the background is filled with 0,
     # otherwise findCountours will not work well
@@ -129,11 +129,10 @@ def second_step(orig):
         x, y, w, h = cv2.boundingRect(c)
         # cv2.imshow('bb_cnt', img[y:y + h, x:x + w, :])
         # cv2.waitKey()
-        top_5_matches, top_5_score = orb_features_matching(img[y:y + h, x:x + w, :])
-        if top_5_score.all():
-            if top_5_score[0] - top_5_score.mean() > np.ceil(top_5_score.mean() / 3):
-                aligned_img = alignImages(img[y:y + h, x:x + w, :], top_5_matches[0]['im'])
-                ret = 0
+        top_5_matches, top_5_scores = orb_features_matching(img[y:y + h, x:x + w, :])
+        if top_5_scores[0] - np.mean(top_5_scores) > np.ceil(np.mean(top_5_scores) / 3):
+            aligned_img = alignImages(img[y:y + h, x:x + w, :], top_5_matches[0]['im'])
+            ret = 0
         # orb_features_matching_flann(img[y:y + h, x:x + w, :], db_paintings)
         # uncomment the following lines if you want to visualize the contours
         canvas = black_img.copy()

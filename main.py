@@ -36,10 +36,10 @@ class BackgroundTask:
             self.__bgTask_ = bgTask
 
         def run(self):
-            # try:
-            self.__bgTask_.taskFuncPointer()(self.__bgTask_.isRunning)
-            # except Exception as e:
-            #     messagebox.showerror("Error", repr(e))
+            try:
+                self.__bgTask_.taskFuncPointer()(self.__bgTask_.isRunning)
+            except Exception as e:
+                messagebox.showerror("Error", repr(e))
             self.__bgTask_.stop()
 
 
@@ -67,18 +67,18 @@ class AnalyzerGUI:
         ------------------------|-------------------------
         '''
 
-        #--------- Instruction, text edit, and play button, all packed in one frame ---------
+        # --------- Instruction, text edit, and play button, all packed in one frame ---------
         self.play_frame = LabelFrame(self.master, text="Insert path to a video", padx=20, pady=10)
         self.play_frame.grid(row=0,column=0)
-        #Path to video
+        # Path to video
         self.entry = Entry(self.play_frame)
         self.entry.insert(0, "videos/vid001.MP4")
         self.entry.grid(row=0, column=0)
-        #Play Button
+        # Play Button
         self.play_Button = Button(self.play_frame, text="Play", command=self.onThreadedClicked)
         self.play_Button.grid(row=0, column=1)
 
-        #--------- Video container ---------
+        # --------- Video container ---------
         self.out_video_dim = (int(self.window_width / 3), int(self.window_height / 2))
         self.video_label = Label(self.master, image="")
         frame = np.zeros((self.out_video_dim[1], self.out_video_dim[0], 3), dtype=np.uint8)
