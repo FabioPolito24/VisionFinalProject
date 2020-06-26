@@ -203,9 +203,11 @@ def method_1(frame):
     gray = (gray > thresh1).astype(np.uint8) * 255
     # cv2.imshow('rgb_hsv', gray)
 
-    # dilate borders
+    # closing operator to correct shapes
     dilate_kernel = np.ones((5, 5), np.uint8)
+    erode_kernel = np.ones((3, 3), np.uint8)
     edged = cv2.dilate(gray, dilate_kernel, iterations=2)
+    edged = cv2.dilate(edged, erode_kernel, iterations=1)
     return edged
 
 
