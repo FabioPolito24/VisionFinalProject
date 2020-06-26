@@ -158,6 +158,10 @@ class AnalyzerGUI:
             name = name.split(".")[0]
             folder_name = "outputs/" + name
             try:
+                os.mkdir("outputs")
+            except:
+                pass
+            try:
                 os.mkdir(folder_name)
             except:
                 print("Directory for solution not created... Does it already exist?")
