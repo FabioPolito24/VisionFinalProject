@@ -105,12 +105,12 @@ class AnalyzerGUI:
         self.rectified_array = [Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image="")]
         self.max_num_rect_paint = 4
         self.rectified_dim = (int(self.window_width / 3), int(self.window_height / self.max_num_rect_paint))
+        black_frame = np.zeros((self.rectified_dim[1], self.rectified_dim[0], 3), dtype=np.uint8)
+        black_rectified_frame = Image.fromarray(black_frame, 'RGB')
+        self.black_rectified_frame = ImageTk.PhotoImage(image=black_rectified_frame)
         for i in range(self.max_num_rect_paint):
-            frame = np.zeros((self.rectified_dim[1], self.rectified_dim[0], 3), dtype=np.uint8)
-            img = Image.fromarray(frame, 'RGB')
-            img = ImageTk.PhotoImage(image=img)
-            self.rectified_array[i].configure(image=img)
-            self.rectified_array[i].image = img
+            self.rectified_array[i].configure(image=self.black_rectified_frame)
+            self.rectified_array[i].image = self.black_rectified_frame
             self.rectified_array[i].grid(row=i, column=0)
 
         # --------- Matched paintings frame and container ---------
@@ -120,12 +120,12 @@ class AnalyzerGUI:
         self.matched_array = [Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image="")]
         self.max_num_matched_paint = 4
         self.matched_dim = (int(self.window_width / 3), int(self.window_height / self.max_num_matched_paint))
+        black_frame = np.zeros((self.matched_dim[1], self.matched_dim[0], 3), dtype=np.uint8)
+        black_matched_frame = Image.fromarray(black_frame, 'RGB')
+        self.black_matched_frame = ImageTk.PhotoImage(image=black_matched_frame)
         for i in range(self.max_num_matched_paint):
-            frame = np.zeros((self.matched_dim[1], self.matched_dim[0], 3), dtype=np.uint8)
-            img = Image.fromarray(frame, 'RGB')
-            img = ImageTk.PhotoImage(image=img)
-            self.matched_array[i].configure(image=img)
-            self.matched_array[i].image = img
+            self.matched_array[i].configure(image=self.black_matched_frame)
+            self.matched_array[i].image = self.black_matched_frame
             self.matched_array[i].grid(row=i, column=0)
 
         # --------- People detector (YoloV3) ---------
@@ -214,16 +214,18 @@ class AnalyzerGUI:
                     self.print_on_GUI(print_on_map(''), self.museum_map_label, self.museum_map_dim)
 
                 # Print the matched paintings
-                for j, dic in enumerate(paintings_matched):
-                    if j >= self.max_num_matched_paint:
-                        break
-                    self.print_on_GUI(dic['im'], self.matched_array[j], self.matched_dim)
+                for j in range(self.max_num_matched_paint):
+                    if j < len(paintings_matched):
+                        self.print_on_GUI(paintings_matched[j]['im'], self.matched_array[j], self.matched_dim)
+                    else:
+                        self.print_on_GUI(self.black_matched_frame, self.matched_array[j], self.matched_dim)
 
                 # display rectified images un GUI
-                for j, image in enumerate(rectified_images):
-                    if j >= self.max_num_rect_paint:
-                        break
-                    self.print_on_GUI(image, self.rectified_array[j], self.rectified_dim)
+                for j in range(self.max_num_rect_paint):
+                    if j < len(rectified_images):
+                        self.print_on_GUI(rectified_images[j], self.rectified_array[j], self.rectified_dim)
+                    else:
+                        self.print_on_GUI(self.black_rectified_frame, self.rectified_array[j], self.rectified_dim)
 
                 for i, box in enumerate(bounding_boxes):
                     box_string = ""

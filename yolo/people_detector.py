@@ -54,10 +54,10 @@ class PeopleDetector:
         c1 = tuple(x[1:3].int())
         c2 = tuple(x[3:5].int())
 
+        #check if the label of the person is inside a label of a painting
         isInside = False
         for i, box in enumerate(paintBoundingBoxies):
-            isInside = (box[0] < c1[0] < c2[0] < (box[0] + box[2]) and box[1] < c1[1] < c2[1] < (box[1] + box[3]))
-
+            isInside = (box[0] <= c1[0] < c2[0] <= (box[0] + box[2]) and box[1] <= c1[1] < c2[1] <= (box[1] + box[3]))
             if isInside:
                 break
         if isInside:
