@@ -167,6 +167,8 @@ class AnalyzerGUI:
                 print("Directory for solution not created... Does it already exist?")
             file = open(folder_name + "/bounding_boxes.csv", 'w')
             file.write("frame,rect_id,x,y,w,h\n")
+            file_rankedlist = open(folder_name + "/ranked_list.csv", 'w')
+            file_rankedlist.write("frame,rect_id,first,second,fourth,fifth\n")
         except:
             print("Error creating file for solution")
             return
@@ -207,18 +209,26 @@ class AnalyzerGUI:
                 #         label_hist(frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]])
 
                 # Print Map with actual room
+                found = 0
                 if len(paintings_matched) != 0:
-                    id = os.path.basename(os.path.normpath(paintings_matched[0]['filename']))
-                    self.print_on_GUI(print_on_map(get_room(id)), self.museum_map_label, self.museum_map_dim)
-                else:
+                    for i in paintings_matched:
+                        if i:
+                            id = os.path.basename(os.path.normpath(i[0]['filename']))
+                            self.print_on_GUI(print_on_map(get_room(id)), self.museum_map_label, self.museum_map_dim)
+                            found = 1
+                            break
+                if not found:
                     self.print_on_GUI(print_on_map(''), self.museum_map_label, self.museum_map_dim)
 
                 # Print the matched paintings
-                for j in range(self.max_num_matched_paint):
-                    if j < len(paintings_matched):
-                        self.print_on_GUI(paintings_matched[j]['im'], self.matched_array[j], self.matched_dim)
-                    else:
-                        self.print_on_GUI(self.black_matched_frame, self.matched_array[j], self.matched_dim)
+                for j, dic in enumerate(paintings_matched):
+                    if j >= self.max_num_matched_paint:
+                        break
+                    if not dic:
+                        self.max_num_matched_paint +=1
+                        continue
+                    self.print_on_GUI(dic[0]['im'], self.matched_array[4 - self.max_num_matched_paint + j], self.matched_dim)
+                self.max_num_matched_paint = 4
 
                 # display rectified images un GUI
                 for j in range(self.max_num_rect_paint):
@@ -227,12 +237,20 @@ class AnalyzerGUI:
                     else:
                         self.print_on_GUI(self.black_rectified_frame, self.rectified_array[j], self.rectified_dim)
 
+                # write ROI and matched paintings ona CSV file
                 for i, box in enumerate(bounding_boxes):
+                    matched_string = ""
                     box_string = ""
                     for j in range(3):
                         box_string += str(box[j]) + ","
                     box_string += str(box[3])
                     file.write(str(frame_counter) + "," + str(i) + "," + box_string + "\n")
+                    if paintings_matched[i]:
+                        file_rankedlist.write(str(frame_counter) + "," + paintings_matched[i][0]['filename'] + "," +
+                                              paintings_matched[i][1]['filename'] + "," +
+                                              paintings_matched[i][2]['filename'] + "," +
+                                              paintings_matched[i][3]['filename'] + "," +
+                                              paintings_matched[i][4]['filename'] + "\n")
 
                 # if cv2.waitKey(25) & 0xFF == ord('q'):
                 #     break
@@ -260,6 +278,7 @@ class AnalyzerGUI:
         # Close interface
         cap.release()
         file.close()
+        file_rankedlist.close()
         self.delete_GUI_imgs()
         cv2.destroyAllWindows()
 

@@ -67,8 +67,10 @@ def first_step(edged, frame):
                                       max(0, x0-DELTA): min(orig.shape[1], x0+w0+DELTA),
                                       :])
                 if ret == 0:
-                    paintings_matched.append(top5_matches[0])
+                    paintings_matched.append(top5_matches)
                     rectified_images.append(aligned_img)
+                else:
+                    paintings_matched.append([])
                 if ret == 1:
                     rectified_images.append(aligned_img)
     return frame, bounding_boxes, rectified_images, paintings_matched

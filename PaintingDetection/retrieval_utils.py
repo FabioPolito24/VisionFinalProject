@@ -50,7 +50,7 @@ def orb_features_matching(im):
             if m.distance < 0.75 * n.distance:
                 # good.append([m, n])
                 good.append([m])
-        print(len(good))
+        # print(len(good))
         # im_match = cv2.drawMatchesKnn(im, kp1, painting['im'], painting['kp'], good, None, flags=2)
         # cv2.imshow("matches", im_match)
         # cv2.waitKey()
