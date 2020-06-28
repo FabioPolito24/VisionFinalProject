@@ -172,7 +172,7 @@ def alignImages(im1, im2):
     if len(matches) < MIN_MATCHES:
         return None
     # Draw top matches
-    imMatches = cv2.drawMatches(im1, keypoints1, im2, keypoints2, matches, None)
+    # imMatches = cv2.drawMatches(im1, keypoints1, im2, keypoints2, matches, None)
     # cv2.imwrite("matches.jpg", imMatches)
     # cv2.imshow("Num good matches: " + str(len(matches)), imMatches)
     # cv2.waitKey()

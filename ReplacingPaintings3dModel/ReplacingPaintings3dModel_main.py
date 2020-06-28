@@ -1,5 +1,6 @@
 from PaintingDetection.detection_utils import *
 from PaintingDetection.rectification_utils import alignImages
+from svm.ROI_classificator import check_roi
 
 DELTA = 10
 
@@ -26,20 +27,24 @@ def main_3d(img):
     c1 = 0
     c2 = 0
     for c in cnts1:
-        if cv2.contourArea(c) < 1000:
+        if cv2.contourArea(c) < 100:
             continue
         # approximate the contour
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-        if len(approx) == 4:
+        (x0, y0, w0, h0) = cv2.boundingRect(c)
+        # if len(approx) == 4:
+        if check_roi(img[y0:y0 + h0, x0:x0 + w0]):
             c1 += 1
     for c in cnts2:
-        if cv2.contourArea(c) < 1000:
+        if cv2.contourArea(c) < 100:
             continue
         # approximate the contour
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-        if len(approx) == 4:
+        (x0, y0, w0, h0) = cv2.boundingRect(c)
+        # if len(approx) == 4:
+        if check_roi(img[y0:y0 + h0, x0:x0 + w0]):
             c2 += 1
     if c1 >= c2:
         cv2.imshow('b&w', cv2.resize(m1, (700, 500)))
@@ -71,8 +76,10 @@ def main_3d(img):
                 cv2.imshow('match 0', top_5_matches[0]['im'])
                 # cv2.imshow('match 1', top_5_matches[1]['im'])
                 sub_image = img[y:y + h, x:x + w, :]
+                cv2.imshow('sub_image', sub_image)
                 aligned = alignImages(top_5_matches[0]['im'], sub_image)
                 cv2.imshow('aligned -1', aligned)
+                # cv2.imshow('mask_pre', cv2.resize((mask < 1).astype(np.uint8) * 255, (700, 500)))
                 try:
                     mask = mask[y:y + h, x:x + w]
                     sub_image[mask] = aligned[mask]
@@ -95,6 +102,12 @@ def main_3d(img):
 #    with open('paintings_db/db_paintings.pickle', 'rb') as db_paintings_file:
 # to
 #    with open('../paintings_db/db_paintings.pickle', 'rb') as db_paintings_file:
+
+# BEFORE RUNNING THIS FILE, change line 11 of ROI_classificator.py:
+# from
+#       with open('svm/model.pickle', 'rb') as model_file:
+# to
+#       with open('../svm/model.pickle', 'rb') as model_file:
 if __name__ == '__main__':
-    img = cv2.imread('../screenshots_3d_model/screenshot_01.jpg', cv2.IMREAD_COLOR)
+    img = cv2.imread('../screenshots_3d_model/screenshot_03.png', cv2.IMREAD_COLOR)
     main_3d(img)
