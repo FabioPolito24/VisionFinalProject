@@ -157,12 +157,14 @@ class AnalyzerGUI:
             name = name.split("/")[-1]
             name = name.split(".")[0]
             folder_name = "outputs/" + name
+            bb_folder_name = "outputs/" + name + "/bb"
             try:
                 os.mkdir("outputs")
             except:
                 pass
             try:
                 os.mkdir(folder_name)
+                os.mkdir(bb_folder_name)
             except:
                 print("Directory for solution not created... Does it already exist?")
             file = open(folder_name + "/bounding_boxes.csv", 'w')
@@ -236,6 +238,19 @@ class AnalyzerGUI:
                         self.print_on_GUI(rectified_images[j], self.rectified_array[j], self.rectified_dim)
                     else:
                         self.print_on_GUI(self.black_rectified_frame, self.rectified_array[j], self.rectified_dim)
+
+
+                #save frame and bounding boxes for computing precision
+                if frame_counter > 0 and (frame_counter % 10) == 0:
+                    bb_file = open(bb_folder_name + "/frame:" + str(frame_counter) + ".txt", 'w')
+                    for i, box in enumerate(bounding_boxes):
+                        x_center = float((box[0] + (box[2] / 2))) / cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+                        y_center = float((box[1] + (box[3] / 2))) / cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                        width = float(box[2]) / cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+                        height = float(box[3]) / cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                        bb_file.write(str(i) + " " + str(x_center) + " " + str(y_center) + " " + str(width) + " " + str(height) + "\n")
+                    bb_file.close()
+                    cv2.imwrite(bb_folder_name + "/frame:" + str(frame_counter) + ".jpg", frame)
 
                 # write ROI and matched paintings ona CSV file
                 for i, box in enumerate(bounding_boxes):
