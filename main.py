@@ -79,7 +79,7 @@ class AnalyzerGUI:
         self.play_Button.grid(row=0, column=1)
 
         # --------- Video container ---------
-        self.out_video_dim = (int(self.window_width / 3), int(self.window_height / 2))
+        self.out_video_dim = (int(self.window_width / 3), int(self.window_height / 2.5))
         self.video_label = Label(self.master, image="")
         frame = np.zeros((self.out_video_dim[1], self.out_video_dim[0], 3), dtype=np.uint8)
         img = Image.fromarray(frame, 'RGB')
@@ -89,7 +89,7 @@ class AnalyzerGUI:
         self.video_label.grid(row=1,column=0)
 
         # --------- Museum Map container ---------
-        self.museum_map_dim = (int(self.window_width / 3), int(self.window_height / 2))
+        self.museum_map_dim = (int(self.window_width / 3), int(self.window_height / 2.5))
         self.museum_map_label = Label(self.master, image="")
         frame = np.zeros((self.museum_map_dim[1], self.museum_map_dim[0], 3), dtype=np.uint8)
         img = Image.fromarray(frame, 'RGB')
@@ -105,12 +105,12 @@ class AnalyzerGUI:
         self.rectified_array = [Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image="")]
         self.max_num_rect_paint = 4
         self.rectified_dim = (int(self.window_width / 3), int(self.window_height / self.max_num_rect_paint))
-        black_frame = np.zeros((self.rectified_dim[1], self.rectified_dim[0], 3), dtype=np.uint8)
-        black_rectified_frame = Image.fromarray(black_frame, 'RGB')
-        self.black_rectified_frame = ImageTk.PhotoImage(image=black_rectified_frame)
+        self.black_rectified_frame = np.zeros((self.rectified_dim[1], self.rectified_dim[0], 3), dtype=np.uint8)
+        rectified_frame = Image.fromarray(self.black_rectified_frame, 'RGB')
+        rectified_frame = ImageTk.PhotoImage(image=rectified_frame)
         for i in range(self.max_num_rect_paint):
-            self.rectified_array[i].configure(image=self.black_rectified_frame)
-            self.rectified_array[i].image = self.black_rectified_frame
+            self.rectified_array[i].configure(image=rectified_frame)
+            self.rectified_array[i].image = rectified_frame
             self.rectified_array[i].grid(row=i, column=0)
 
         # --------- Matched paintings frame and container ---------
@@ -120,12 +120,12 @@ class AnalyzerGUI:
         self.matched_array = [Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image="")]
         self.max_num_matched_paint = 4
         self.matched_dim = (int(self.window_width / 3), int(self.window_height / self.max_num_matched_paint))
-        black_frame = np.zeros((self.matched_dim[1], self.matched_dim[0], 3), dtype=np.uint8)
-        black_matched_frame = Image.fromarray(black_frame, 'RGB')
-        self.black_matched_frame = ImageTk.PhotoImage(image=black_matched_frame)
+        self.black_matched_frame = np.zeros((self.matched_dim[1], self.matched_dim[0], 3), dtype=np.uint8)
+        matched_frame = Image.fromarray(self.black_matched_frame, 'RGB')
+        matched_frame = ImageTk.PhotoImage(image=matched_frame)
         for i in range(self.max_num_matched_paint):
-            self.matched_array[i].configure(image=self.black_matched_frame)
-            self.matched_array[i].image = self.black_matched_frame
+            self.matched_array[i].configure(image=matched_frame)
+            self.matched_array[i].image = matched_frame
             self.matched_array[i].grid(row=i, column=0)
 
         # --------- People detector (YoloV3) ---------
@@ -179,12 +179,15 @@ class AnalyzerGUI:
         if cap.isOpened():
             width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-            if width > height:
-                scale_percent = int(width / self.out_video_dim[1])
+            height_scale = height / float(self.out_video_dim[1])
+            width_scale = width / float(self.out_video_dim[0])
+            scale_percent = 1
+            if width_scale > height_scale:
+                scale_percent = width_scale
             else:
-                scale_percent = int(height / self.out_video_dim[0])
+                scale_percent = height_scale
             self.out_video_dim = (int(width / scale_percent), int(height / scale_percent))
-            self.museum_map_dim = ( self.out_video_dim[0], self.out_video_dim[1])
+            self.museum_map_dim = (self.out_video_dim[0], self.out_video_dim[1])
 
         imgs = []
         frame_counter = 0
@@ -223,22 +226,48 @@ class AnalyzerGUI:
                     self.print_on_GUI(print_on_map(''), self.museum_map_label, self.museum_map_dim)
 
                 # Print the matched paintings
-                for j, dic in enumerate(paintings_matched):
-                    if j >= self.max_num_matched_paint:
-                        break
-                    if not dic:
-                        self.max_num_matched_paint +=1
-                        continue
-                    self.print_on_GUI(dic[0]['im'], self.matched_array[4 - self.max_num_matched_paint + j], self.matched_dim)
-                self.max_num_matched_paint = 4
+                accurate_match = 0
+                for j in range(self.max_num_matched_paint):
+                    if j < len(paintings_matched) and paintings_matched[j]:
+                        height, width, channels = paintings_matched[j][0]['im'].shape
+                        scale_rect = 1
+                        height_scale = height / float(self.matched_dim[1])
+                        width_scale = width / float(self.matched_dim[0])
+                        if width_scale > height_scale:
+                            scale_rect = width_scale
+                        else:
+                            scale_rect = height_scale
+                        new_matched_dim = (int(width / scale_rect), int(height / scale_rect))
+                        painting_img = cv2.resize(paintings_matched[j][0]['im'], new_matched_dim)
+                        bg_img = np.zeros((self.matched_dim[1], self.matched_dim[0], 3), dtype=np.uint8)
+                        x_offset = int((self.matched_dim[0] - new_matched_dim[0]) / 2.0)
+                        y_offset = int((self.matched_dim[1] - new_matched_dim[1]) / 2.0)
+                        bg_img[y_offset:y_offset + painting_img.shape[0], x_offset:x_offset + painting_img.shape[1]] = painting_img
+                        self.print_on_GUI(bg_img, self.matched_array[accurate_match], self.matched_dim)
+                        accurate_match += 1
+                    else:
+                        self.print_on_GUI(self.black_matched_frame, self.matched_array[j], self.matched_dim)
 
-                # display rectified images un GUI
+                #display rectified images un GUI
                 for j in range(self.max_num_rect_paint):
-                    if j < len(rectified_images):
-                        self.print_on_GUI(rectified_images[j], self.rectified_array[j], self.rectified_dim)
+                    if len(rectified_images) > 0 and j < len(rectified_images) and np.sum(rectified_images[j]) != None:
+                        height, width, channels = rectified_images[j].shape
+                        scale_rect = 1
+                        height_scale = height / float(self.rectified_dim[1])
+                        width_scale = width / float(self.rectified_dim[0])
+                        if width_scale > height_scale:
+                            scale_rect = width_scale
+                        else:
+                            scale_rect = height_scale
+                        new_rectified_dim = (int(width / scale_rect), int(height / scale_rect))
+                        painting_img = cv2.resize(rectified_images[j], new_rectified_dim)
+                        bg_img = np.zeros((self.rectified_dim[1], self.rectified_dim[0], 3), dtype=np.uint8)
+                        x_offset = int(( self.rectified_dim[0] - new_rectified_dim[0] ) / 2.0)
+                        y_offset = int(( self.rectified_dim[1] - new_rectified_dim[1] ) / 2.0)
+                        bg_img[y_offset:y_offset + painting_img.shape[0], x_offset:x_offset + painting_img.shape[1]] = painting_img
+                        self.print_on_GUI(bg_img, self.rectified_array[j], self.rectified_dim)
                     else:
                         self.print_on_GUI(self.black_rectified_frame, self.rectified_array[j], self.rectified_dim)
-
 
                 #save frame and bounding boxes for computing precision
                 if frame_counter > 0 and (frame_counter % 10) == 0:
@@ -272,7 +301,6 @@ class AnalyzerGUI:
 
                 # Append actual frame to create a video at the end
                 imgs.append(self.get_screenshot())
-
                 frame_counter += 1
 
             else:
