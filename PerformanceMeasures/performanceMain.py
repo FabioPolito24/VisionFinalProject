@@ -31,6 +31,7 @@ frameW = 1280
 frameH = 720
 files = glob.glob("vid12/*.txt")
 iou_list = []
+tp = 0
 fp = 0
 fn = 0
 
@@ -45,12 +46,21 @@ for file in files:
             bb1 = ids.iloc[0].drop('id')
             bb2 = ids.iloc[1].drop('id')
             iou_list.append(IoU(bb1, bb2, frameW, frameH))
+            tp += 1
         else:
             if i > ground_truth_start:
                 fn += 1
             else:
                 fp += 1
 
+
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+f_measure = 2 * precision * recall / (precision + recall)
 print(np.mean(iou_list))
-print(fp)
-print(fn)
+print('FP: ', fp)
+print('FN: ', fn)
+print('TP: ', tp)
+print('Precision: ', precision)
+print('Recall: ', recall)
+print('F-Measure: ', f_measure)
