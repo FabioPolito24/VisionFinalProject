@@ -5,6 +5,7 @@
 3. Put them in yolo/weights as yolov3.weights
 4. Run save_key_points.py to create local db of keypoints
 5. Run main.py and Enjoi the project
+6. Run ReplacingPaintings3dModel_main.py to replace paintings in 3d model
 
 ## Description of the functionality:
 ### Painting detection: predict a ROI for each painting
@@ -71,31 +72,32 @@
 
 ## Progect structure:
     .
-    ├── main.py                        # main program
-    ├── outputs                        # Video edited with bounding box
+    ├── main.py                            # main program to detect paintings
+    ├── ReplacingPaintings3dModel_main.py  # main program to relpace paintings in 3d model
+    ├── outputs                            # Video edited with bounding box
     │   ├── VIRB0395
-    │   └── ...                        # videos...
+    │   └── ...                            # videos...
     ├── PaintingDetection
-    │   ├── general_utils.py           # general functions
-    │   ├── detection_utils.py         # detection functions
-    │   ├── rectification_utils.py     # rectification functions
-    │   ├── retrival_utils.py          # retrival functions
-    │   ├── histogram.py               # histogram
-    │   ├── save_key_points.py         # script to generate keypoits db
+    │   ├── general_utils.py               # general functions
+    │   ├── detection_utils.py             # detection functions
+    │   ├── rectification_utils.py         # rectification functions
+    │   ├── retrival_utils.py              # retrival functions
+    │   ├── histogram.py                   # histogram
+    │   ├── save_key_points.py             # script to generate keypoits db
     │   └── ...
-    ├── painting_db                    # Database of all Paintings
-    ├── videos                         # Example videos ready to use
-    ├── PeopleLocalization             # Example videos ready to use
+    ├── painting_db                        # Database of all Paintings
+    ├── videos                             # Example videos ready to use
+    ├── PeopleLocalization                 # Example videos ready to use
     │   ├── images
-    │   │   └── map.png                # map of the museum
-    │   └── peopleLocalizator.py       # Script that print red dot on actual room
-    ├── SVM                            # SVM to determine if a bb contains a painting or not
+    │   │   └── map.png                    # map of the museum
+    │   └── peopleLocalizator.py           # Script that print red dot on actual room
+    ├── SVM                                # SVM to determine if a bb contains a painting or not
     │   ├── dbCreator.py
     │   └── ROI_classificator.py
-    ├── PerformanceMesures             # Frame with hand made label and automatically generated once
-    └── yolo                           # YoloV3 NN used for people detection
-        ├── ...                        # Other utilities for yolo
-        ├── weights                    # Folder containing weights
-        │   └── yolov3.weights         # Download Weights: https://pjreddie.com/media/files/yolov3.weights
-        ├── util.py                    # Some methods usefull
-        └── people_detector.py         # Class to make inference in video frames
+    ├── PerformanceMesures                 # Frame with hand made label and automatically generated once
+    └── yolo                               # YoloV3 NN used for people detection
+        ├── ...                            # Other utilities for yolo
+        ├── weights                        # Folder containing weights
+        │   └── yolov3.weights             # Download Weights: https://pjreddie.com/media/files/yolov3.weights
+        ├── util.py                        # Some methods usefull
+        └── people_detector.py             # Class to make inference in video frames
