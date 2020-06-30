@@ -94,9 +94,10 @@ def main_3d(img):
     img = cv2.resize(img, (1200, 1000))
     cv2.imshow('after', cv2.resize(img, (800, 650)))
     cv2.waitKey()
+    cv2.imwrite('Paper_Presentation/3DModel/replaced_10.png', img)
     return img
 
 
 if __name__ == '__main__':
-    img = cv2.imread('screenshots_3d_model/screenshot_03.png', cv2.IMREAD_COLOR)
+    img = cv2.imread('screenshots_3d_model/screenshot_10.jpg', cv2.IMREAD_COLOR)
     main_3d(img)
