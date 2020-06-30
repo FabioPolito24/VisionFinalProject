@@ -43,8 +43,8 @@ All frames are exctracted in sequence from the video and processed independently
 
 \subsection{Preprocessing}
 First of all, each frame is converted into black and white and processed with a bilateral filter to remove noise while preserving at the same time the edges.\\
-After that, we apply otsu threshold  with the aim to separate the pixels into background and paintings, due to their chromatic difference.\\
-To obtain a better result we improve the binary image by employing the closing operator to remove morphological noise like small holes.\\ 
+After that, we apply otsu threshold (figure \ref{fig:1_otsu_threshold}) with the aim to separate the pixels into background and paintings, due to their chromatic difference.\\
+To obtain a better result we improve the binary image by employing the closing operator (figure \ref{fig:2_closing}) to remove morphological noise like small holes.\\ 
 
 \bigskip
 
@@ -53,7 +53,7 @@ To obtain a better result we improve the binary image by employing the closing o
   \centering
   \includegraphics[width=0.8\columnwidth]{../detection_pipeline/1_otsu_threshold.png}
   \caption{OTSU threshold.}
-  \label{fig:ROC_curve}
+  \label{fig:1_otsu_threshold}
 \end{figure}
 
 \bigskip
@@ -62,25 +62,25 @@ To obtain a better result we improve the binary image by employing the closing o
   \centering
   \includegraphics[width=0.8\columnwidth]{../detection_pipeline/2_closing.png}
   \caption{Closing.}
-  \label{fig:ROC_curve}
+  \label{fig:2_closing}
 \end{figure}
 
 \bigskip
 
 \subsection{Bounding Box detection}
-Using the function findContours of OpenCV, we obtain the outlines of the objects in the foreground, among which there will also be the paintings that we are looking for.\\
+Using the function findContours of OpenCV, we obtain the outlines of the objects in the foreground (figure \ref{fig:3_contours}), among which there will also be the paintings that we are looking for.\\
 \bigskip
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.8\columnwidth]{../detection_pipeline/3_contours.png}
   \caption{Contours.}
-  \label{fig:ROC_curve}
+  \label{fig:3_contours}
 \end{figure}
 
 \bigskip
 We then create the bounding box containing this contours and to eliminate the rectangles identified inside the paintings, we keep only the external ones and eliminate those contained within others.\\
-Among the remaining bounding boxes, those that are not judged as paintings by an SVM model, will get discarded.
+Among the remaining bounding boxes, those that are not judged as paintings by an SVM model, will get discarded as shown in figure \ref{fig:4_bb}.
 
 \bigskip
 
@@ -88,7 +88,7 @@ Among the remaining bounding boxes, those that are not judged as paintings by an
   \centering
   \includegraphics[width=0.8\columnwidth]{../detection_pipeline/4_bb.png}
   \caption{Bounding Boxes.}
-  \label{fig:ROC_curve}
+  \label{fig:4_bb}
 \end{figure}
 
 \bigskip
@@ -112,12 +112,12 @@ Afterward, by transforming its format from BGR to HSV and then applying the otsu
 
 \section{Painting Retrieval}
 For the retrieval of the paintings situated in the database we use an approach based on feature detection algorithms.\\ 
-After consulting a paper that performs a comparative analysis between the most well known algorithms ~\cite{b1} to get a general idea of the strengths and weaknesses of the different methods available to us, we carried out some experiments focusing on SIFT, AKAZE and ORB.\\
+After consulting a paper that performs a comparative analysis between the most well known algorithms ~\cite{b7} to get a general idea of the strengths and weaknesses of the different methods available to us, we carried out some experiments focusing on SIFT, AKAZE and ORB.\\
 The results obtained made us opt for ORB, because overall it gave us more precise results than AKAZE and, unlike SIFT, it’s free of charge, therefore usable without fees in a possible commercial application.\\
-To save time, the key points of the paintings in the database have been previously calculated and stored using the pickle module [link pickle documentation].\\
+To save time, the key points of the paintings in the database have been previously calculated and stored using the pickle module \cite{b8}.\\
 It implements binary protocols for serializing and de-serializing a Python object structure.\\
 This data is loaded only once during the launch of the program.
-The key points are computed from the bounding boxes detected by the previously described pipeline and afterward, to determine the best matches, the ratio test proposed by D. Lowe in the SIFT paper is performed[Reference to the sift paper].\\
+The key points are computed from the bounding boxes detected by the previously described pipeline and afterward (figure \ref{fig_Orb_matches}), to determine the best matches, the ratio test proposed by D. Lowe in the SIFT paper is performed \cite{b9}.\\
 This measure is obtained by comparing the distance of the closest neighbor to that of the second-closest neighbor.\\
 This measure performs well because correct matches need to have the closest neighbor significantly closer than the closest incorrect match to achieve reliable matching.\\
 
@@ -140,7 +140,7 @@ To understand if the painting is actually recognized among those in the DB, the 
 On the contour found with the techniques described in \textbf{Precision boosting and paintings segmentation} is applied the function approxPolyDP from OpenCV to approximate it to a polygonal curve.\\
 If the shape returned has four vertices we can assume that the process has found a rectangular painting.\\
 Given the four points, we are able to estimate the homography and apply the transformation to rectify the painting.\\
-To calculate the aspect ratio for the projected rectangle we use an implementation based on this paper [] which derives the equations assuming a pinhole camera model.\\
+To calculate the aspect ratio for the projected rectangle we use an implementation based on this paper \cite{b10} which derives the equations assuming a pinhole camera model.\\
 This pipeline is applied to the paintings that don't get a match on the database.
 
 \begin{figure}[htbp]
@@ -161,7 +161,7 @@ To obtain a better result also the inverse warping algorithm is utilized.\\
 A neural network (YoloV3) is used for people detection.\\
 At inference time each video frame is passed through the network that find all bounding boxes containing one of the objects in our classes list.\\
 The weights for the network are obtained from an already trained network on COCO[ reference to COCO paper], a famous dataset containing 80 different classes.\\
-In our case the only wanted class is the person one, for ease of use the network has not been modified, but from its output will be deleted all the classes with an id different from 0 that is the id of the person class.\\
+In our case the only wanted class is the person one, for ease of use the network has not been modified, but from its output will be deleted all the classes with an id different from 0 that is the id of the person class \ref{fig_People_detection} .\\
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../people_detection/paint_and_person.png}}
@@ -169,7 +169,7 @@ In our case the only wanted class is the person one, for ease of use the network
 \label{fig_People_detection}
 \end{figure}
 
-A little problem has arisen due to the high number of paintings representing persons as show in figure \ref{fig_People_detection_error}, in fact the network detect them also inside the paintings, to prevent these false positive we added a new control on the pixel position in order to cut out all the people detected inside a bounding box previously classified as a painting.
+A little problem has arisen due to the high number of paintings representing persons as show in figure \ref{fig_People_detection_error}, in fact the network detect them also inside the paintings, to prevent these false positive we added a new control on the pixel position in order to cut out all the people detected inside a bounding box previously classified as a painting \ref{fig_People_detection_error}.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../people_detection/people_error.png}}
@@ -188,7 +188,7 @@ Starting from a previously detected and retrieved painting from the database, we
 Moreover the localization will work only if the painting matched is considered safe that means the painting need to have a good level of matches, otherwise localization is not active.\\
 
 \section{Painting Replacement in the 3D Model}
-The pipeline followed to accomplish this task is similar to the one explained before with a little difference. It starts directly with the hsv version of the image taken as input (a screenshot from the 3d model); then we apply Otsu threshold, followed by noise removal thanks to opening or closing process, keeping the one that maximizes the number of contours found. At this point we loop over each contour and find an approximation of itself with approxPolyDP; if the approximation has a shape described by 4 vertices, we estimate keypoints with orb and fetch the corresponding image from the database. Once this is done, if the image fetched is judged as a good match, we align that image with respect to the screenshot’s image plane and superimpose the result on the input image.
+The pipeline followed to accomplish this task is similar to the one explained before with a little difference. It starts directly with the hsv version of the image taken as input (a screenshot from the 3d model); then we apply Otsu threshold, followed by noise removal thanks to opening or closing process, keeping the one that maximizes the number of contours found. At this point we loop over each contour and find an approximation of itself with approxPolyDP; if the approximation has a shape described by 4 vertices, we estimate keypoints with orb and fetch the corresponding image from the database. Once this is done, if the image fetched is judged as a good match, we align that image with respect to the screenshot’s image plane and superimpose the result on the input image as shown in figure \ref{fig_3d_model}.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../3DModel/collage_06.jpg}}
@@ -199,7 +199,7 @@ The pipeline followed to accomplish this task is similar to the one explained be
 What is worth to mention is that the alignment function that we use in this process is the same of the main pipeline of painting rectification. This function in fact takes as input two images and project the first one on the plane of the second. If the second image is a painting fetched from the database, it means that the first image is rectified; if instead the second image is a painting coming from a frame/screenshot, it means that we want to distort an image in order to match the perspective of that painting.\\
 
 \section{Metrics and Precision}
-To calculate the precision of the presented method we took almost 10 random frame for 6 different videos and labeled all the paintings by hand using a tool for labeling (normally used for yolo labels). Then with a custom code we calculated some metrics comparing hand made labels with automatically generated ones.
+To calculate the precision of the presented method we took almost 10 random frame for 6 different videos and labeled all the paintings by hand using a tool for labeling (normally used for yolo labels) \ref{fig_labeling}. Then with a custom code we calculated some metrics comparing hand made labels with automatically generated ones.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../Labeling_precision_metrics/Precision_Labeling.png}}
@@ -283,9 +283,14 @@ It was then necessary to face the fact that each method, being based solely on i
 \bibitem{b1} C. Tomasi and R. Manduchi, "Bilateral filtering for gray and color images," Sixth International Conference on Computer Vision (IEEE Cat. No.98CH36271), Bombay, India, 1998, pp. 839-846, doi: 10.1109/ICCV.1998.710815..
 \bibitem{b2} J. Zhang and J. Hu, "Image Segmentation Based on 2D Otsu Method with Histogram Analysis," 2008 International Conference on Computer Science and Software Engineering, Hubei, 2008, pp. 105-108, doi: 10.1109/CSSE.2008.206.
 \bibitem{b3}Suzuki, S., and Be, K. (1985). Topological structural analysis of digitized binary images by border following. Computer Vision, Graphics, and Image Processing 30, 32–46. doi:10.1016/0734-189X(85)90016-7.
-\bibitem{b4} 
+\bibitem{b4} \url{https://docs.opencv.org/2.4/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html#approxpolydp}
 \bibitem{b5} E. Rublee, V. Rabaud, K. Konolige and G. Bradski, "ORB: An efficient alternative to SIFT or SURF," 2011 International Conference on Computer Vision, Barcelona, 2011, pp. 2564-2571, doi: 10.1109/ICCV.2011.6126544.
 \bibitem{b6}Redmon, Joseph and Ali Farhadi. “YOLOv3: An Incremental Improvement.” ArXiv abs/1804.02767 (2018): n. pag.
+\bibitem{b7}Tareen, Shaharyar Ahmed Khan, and Zahra Saleem. "A comparative analysis of sift, surf, kaze, akaze, orb, and brisk." 2018 International conference on computing, mathematics and engineering technologies (iCoMET). IEEE, 2018.
+\bibitem{b8} \url{https://docs.python.org/3/library/pickle.html}
+\bibitem{b9} Lowe, David G. "Distinctive image features from scale-invariant keypoints." International journal of computer vision 60.2 (2004): 91-110.
+\bibitem{b10}Zhang, Zhengyou, and Li-Wei He. "Whiteboard scanning and image enhancement." Digital Signal Processing 17.2 (2007): 414-432.
+
 \end{thebibliography}
 
 \end{document}
