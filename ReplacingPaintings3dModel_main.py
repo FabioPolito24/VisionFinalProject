@@ -89,8 +89,8 @@ def main_3d(img):
                 sub_image[sub_image == (0,0,0)] = sub_orig[sub_image == (0,0,0)]
                 cv2.imshow('new', sub_image)
                 cv2.waitKey()
-                cv2.imwrite('Paper_Presentation/3DModel/replacedNew_03.png', sub_image)
-                cv2.imwrite('Paper_Presentation/3DModel/replacedOrig_03.png', sub_orig)
+                cv2.imwrite('Paper_Presentation/3DModel/replacedNew_07.png', sub_image)
+                cv2.imwrite('Paper_Presentation/3DModel/replacedOrig_07.png', sub_orig)
                 cv2.destroyAllWindows()
     cv2.destroyAllWindows()
     # cv2.imshow('before', cv2.resize(img, (800, 650)))
@@ -98,10 +98,10 @@ def main_3d(img):
     # img = cv2.resize(img, (1200, 1000))
     # cv2.imshow('after', cv2.resize(img, (800, 650)))
     # cv2.waitKey()
-    cv2.imwrite('Paper_Presentation/3DModel/replaced_03.png', img)
+    cv2.imwrite('Paper_Presentation/3DModel/replaced_07.png', img)
     return img
 
 
 if __name__ == '__main__':
-    img = cv2.imread('screenshots_3d_model/screenshot_03.png', cv2.IMREAD_COLOR)
+    img = cv2.imread('screenshots_3d_model/screenshot_07.jpg', cv2.IMREAD_COLOR)
     main_3d(img)

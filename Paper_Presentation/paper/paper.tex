@@ -190,15 +190,9 @@ Moreover the localization will work only if the painting matched is considered s
 The pipeline followed to accomplish this task is similar to the one explained before with a little difference. It starts directly with the hsv version of the image taken as input (a screenshot from the 3d model); then we apply Otsu threshold, followed by noise removal thanks to opening or closing process, keeping the one that maximizes the number of contours found. At this point we loop over each contour and find an approximation of itself with approxPolyDP; if the approximation has a shape described by 4 vertices, we estimate keypoints with orb and fetch the corresponding image from the database. Once this is done, if the image fetched is judged as a good match, we align that image with respect to the screenshot’s image plane and superimpose the result on the input image.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=0.8\columnwidth]{../screenshots_3d_model/screenshot_01.jpg}}
-\caption{3dmodel}
+\centerline{\includegraphics[width=0.8\columnwidth]{../3DModel/collage_06.jpg}}
+\caption{Original image vs Superimposed image}
 \label{fig_3d_model}
-\end{figure}
-
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=0.8\columnwidth]{../screenshots_3d_model/screenshot_03.png}}
-\caption{3d model 2}
-\label{fig_3d_model_2}
 \end{figure}
 
 What is worth to mention is that the alignment function that we use in this process is the same of the main pipeline of painting rectification. This function in fact takes as input two images and project the first one on the plane of the second. If the second image is a painting fetched from the database, it means that the first image is rectified; if instead the second image is a painting coming from a frame/screenshot, it means that we want to distort an image in order to match the perspective of that painting.\\
