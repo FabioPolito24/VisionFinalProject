@@ -30,14 +30,12 @@ def main_3d(img):
         if cv2.contourArea(c) < 100:
             continue
         (x0, y0, w0, h0) = cv2.boundingRect(c)
-        # if len(approx) == 4:
         if check_roi(img[y0:y0 + h0, x0:x0 + w0]):
             c1 += 1
     for c in cnts2:
         if cv2.contourArea(c) < 100:
             continue
         (x0, y0, w0, h0) = cv2.boundingRect(c)
-        # if len(approx) == 4:
         if check_roi(img[y0:y0 + h0, x0:x0 + w0]):
             c2 += 1
     if c1 >= c2:
