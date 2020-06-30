@@ -1,0 +1,88 @@
+Vision Final project
+
+
+In questo paper, presentiamo un metodo per distinguere ed identificare quadri a partire da un video. Ogni frame viene processato con tecniche di image processing in modo tale da trovare la posizione dei quadri, per correggerne la distorsione e individuare il medesimo quadro all’interno del db. Contemporaneamente una rete neurale (YoloV3) si occupa dell’individuazione delle persone, le quali saranno localizzate all’interno del museo conoscendo la posizione dei dipinti vicino ad esse. 
+
+
+In this paper, we present a method to detect and identify paintings starting from a video taken inside “Galleria Estensi, Modena”. Each frame is processed with image processing techniques in order to localize paintings, rectify distortions, and fetch from the database the corresponding one. At the same time, an artificial neural network (YoloV3) detects people, which are localized inside a room of the museum.
+
+Related works
+BILATERAL FILTER
+CANNY
+OTSU
+FIND CONTOURS
+SVM
+ORB
+YOLO
+
+1) Painting detection
+dal video vengono estratti in sequenza tutti i frame che vengono processati indipendentemente l’uno dall’altro. la pipeline seguita viene descritta in seguito.
+
+preprocessing
+Come prima cosa ogni frame viene convertito in bianco e nero. Viene poi applicato un filtro bilaterale per rimuovere il rumore dato dalla telecamera ma mantenendo il più possibile inalterati i contorni. Successivamente applicando otsu threshold dividiamo l’immagine in due classi, ipotizzando che la differenza cromatica tra background e paintings sia tale da posizionarli in due classi separate. Infine, applichiamo in sequenza dilate and erosion per rimuovere eventuali buchi nei quadri (closing process).
+
+Counturs and detection
+Painting BB detection
+Mediante l’algoritmo findCouturs di opencv, otteniamo i contorni degli oggetti in primo piano tra i quali saranno presenti anche quadri che stiamo cercando.
+
+
+Contours can be explained simply as a curve joining all the continuous points (along the boundary), having same color or intensity. The contours are a useful tool for shape analysis and object detection and recognition
+
+i quali conterranno anche i quadri che vogliamo rilevare.
+Per fare una prima scrematura togliamo tutti i quadrati contenuti all’interno di altri ottenendo soltanto i buonding box esterni. Tra i rettangoli restanti, vengono scartati quelli che non vengono giudicati come paintings da un modello svm di cui si parlerà meglio in seguito.
+
+
+Precision boosting on Painting BB
+	enlight - hsv - findCountours - ApproxPolyDP - [ retrieval - rectification ]
+Per ottenere una migliore segmentazione all’interno di ogni bounding box applichiamo un raffinazione delle immagini.
+Osservando la scarsa illuminazione nei video che ci sono stati forniti, i quadri 
+risultano scuri rispetto alla propria cornice e non corrispondenti alla luminosità dei quadri presenti nel database. questo fatto porta ad una scarsa precisione nello step di retrieval. per far fronte a questo fatto, ad ogni bb precedentemente trovato viene aumentate la componente luminosità.
+Successivamente trasformando il proprio formato da bgr a hsv e applicando poi nuovamente la otsu threshold, siamo in grado di ottenere una più precisa distinzione tra painting e cornice/sfondo, che sarà poi utilizzata durante gli step di retrieval e rectification. 
+
+
+2) Painting retrieval
+Per la retrieval dei quadri presenti nel database ci siamo basati su algoritmi di feature detection.
+Dopo aver consultato il paper A comparative analysis of SIFT, SURF, KAZE, AKAZE, ORB, and BRISK - IEEE Conference Publication per avere un'idea generale dei pregi e difetti dei diversi metodi a nostra disposizione abbiamo eseguito alcuni esperimenti concentrandoci su SIFT, AKAZE e ORB.
+I risultati ottenuti ci hanno fatto optare per ORB, perchè nel complesso ci ha dato risultati più precisi rispetto ad AKAZE e a differenza di SIFT è license free, quindi utilizzabile gratuitamente in una eventuale applicazione commerciale.
+Per risparmiare sul tempo d’esecuzione è stato precedentemente creato un database contenente i key points calcolati con Orb sulle immagini dei quadri.
+Dal bounding box rilevato vengono calcolati i key points e successivamente per determinare i migliori match tra esso e i quadri del database si utilizza il ratio test proposto da D. Lowe nel paper di SIFT (https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf).
+This measure is obtained by comparing the distance of the closest neighbor to that of the second-closest neighbor. This measure performs well because correct matches need to have the closest neighbor significantly closer than the closest incorrect match to achieve reliable matching.
+For false matches, there will likely be a number of other false matches within similar distances due to the high dimensionality of the feature space.
+In our implementation we reject all matches in which the distance ratio is greater than 0.75.
+Viene poi creata una classifica con i 5 migliori match trovati.
+Per capire se il il quadro è stato effettivamente riconosciuto tra quelli nel DB viene calcolata la media dei key points abbinati all’interno dei migliori 5 riscontri e se il primo quadro si discosta da essa per un valore significativo viene considerato come corretto. 
+
+
+
+
+
+
+3) Painting Rectification:
+four_points_transform
+Per contorno trovato da Precision boosting on Painting BB viene applicata la funzion approxpolydp, che, come preannuncia il nome, ne approssima la forma. Se tale forma contiene 4 vertici possiamo assumere che si tratti di un quadro (rettangolare) e quindi per rettificare utilizziamo tali vertici per creare una matrice di trasformazione che, applicata all’immagine grazie a warpPerspective, restituisce il quadro rettificato.
+alignImages
+Spesso i quadri hanno una forma ovale, sebbene la cornice sia rettangolare. questo fa si’ che l’approssimazione trovata da approxpolydp non sia composta da 4 vertici, rendendo inutilizzabile il metodo appena spiegato. L’approccio che si utilizza in questo caso si basa sul trovare i keypoints comuni tra immagine distorta e corrispondente match nel database per realizzare una matrice omografica che permette di portare la prima immagine sullo stesso piano della seconda.
+
+
+
+
+
+
+4) People Detection:
+	A neural network (YoloV3) is used for people detection.
+Each video frame is passed through the network tho make inference, and find all bounding boxes containing one of the object in our classes list.
+The weights for the network are obtained from an already trained network on COCO, a famous dataset containing 80 different classes.
+In our case the only the only wanted class is the person one, for ease of use the network has not been modified, but from it’s output will be deleted all the classes with with an id different from 0 that is the id of the person class.
+A little problem has arisen due to the high number of paintings representing persons, in fact the network detect them also inside the paintings, to prevent these false positive we added a new control on the pixel position in order to cut out all the persone detected inside a bounding box previously classified as a painting.
+
+
+
+I frame del video vengono passati alla rete la quale durante il processo di inferenza trova i bounding box contenenti le persone che vengono stampati sul frame originale in rosso.
+I pesi usati per la rete sono ottenuti dal training su COCO, un dataset di 80 classi. Nel nostro caso l’unica classe desiderata era quella delle persone, per semplicità di utilizzo la rete non è stata modificata ma dall’output di essa vengono tolte tutte le classi diverse da quella con id = 0 ovvero le persone.
+Un piccolo problema è sorto dato l’alto numero di quadri raffiguranti persone infatti la rete le rileva anche all’interno di essi, per togliere questi false positive è stato aggiunto un controllo sulla posizione delle rilevazioni ovvero l’eliminazione di tutte le persone rilevate all’interno di un bounding box precedentemente classificato come quadro.
+
+
+ToDo alla fine
+method 0/1/2
+singleton
+
