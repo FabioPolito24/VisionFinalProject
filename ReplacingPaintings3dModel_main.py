@@ -29,9 +29,6 @@ def main_3d(img):
     for c in cnts1:
         if cv2.contourArea(c) < 100:
             continue
-        # approximate the contour
-        peri = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
         (x0, y0, w0, h0) = cv2.boundingRect(c)
         # if len(approx) == 4:
         if check_roi(img[y0:y0 + h0, x0:x0 + w0]):
@@ -39,9 +36,6 @@ def main_3d(img):
     for c in cnts2:
         if cv2.contourArea(c) < 100:
             continue
-        # approximate the contour
-        peri = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
         (x0, y0, w0, h0) = cv2.boundingRect(c)
         # if len(approx) == 4:
         if check_roi(img[y0:y0 + h0, x0:x0 + w0]):
@@ -84,20 +78,14 @@ def main_3d(img):
                     mask = mask[y:y + h, x:x + w]
                     sub_orig = sub_image.copy()
                     sub_image[mask] = aligned[mask]
+                    sub_image[sub_image == (0,0,0)] = sub_orig[sub_image == (0,0,0)]
+                    cv2.imshow('new', sub_image)
+                    cv2.waitKey()
+                    cv2.imwrite('Paper_Presentation/3DModel/replacedNew_07.png', sub_image)
+                    cv2.imwrite('Paper_Presentation/3DModel/replacedOrig_07.png', sub_orig)
                 except:
                     pass
-                sub_image[sub_image == (0,0,0)] = sub_orig[sub_image == (0,0,0)]
-                cv2.imshow('new', sub_image)
-                cv2.waitKey()
-                cv2.imwrite('Paper_Presentation/3DModel/replacedNew_07.png', sub_image)
-                cv2.imwrite('Paper_Presentation/3DModel/replacedOrig_07.png', sub_orig)
                 cv2.destroyAllWindows()
-    cv2.destroyAllWindows()
-    # cv2.imshow('before', cv2.resize(img, (800, 650)))
-    # img[img == (0,0,0)] = orig[img == (0,0,0)]
-    # img = cv2.resize(img, (1200, 1000))
-    # cv2.imshow('after', cv2.resize(img, (800, 650)))
-    # cv2.waitKey()
     cv2.imwrite('Paper_Presentation/3DModel/replaced_07.png', img)
     return img
 

@@ -99,7 +99,6 @@ class AnalyzerGUI:
         self.museum_map_label.grid(row=2, column=0)
 
         # --------- Rectified paintings frame and container ---------
-        # ToDo: print rectified images on GUI
         self.rect_paint_frame = LabelFrame(self.master, text="Rectified Paintings")
         self.rect_paint_frame.grid(row=0, column=1, rowspan=3)
         self.rectified_array = [Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image=""),Label(self.rect_paint_frame, image="")]
@@ -114,7 +113,6 @@ class AnalyzerGUI:
             self.rectified_array[i].grid(row=i, column=0)
 
         # --------- Matched paintings frame and container ---------
-        # ToDo: print matched images on GUI
         self.match_paint_frame = LabelFrame(self.master, text="Matched Paintings")
         self.match_paint_frame.grid(row=0, column=2, rowspan=3)
         self.matched_array = [Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image=""),Label(self.match_paint_frame, image="")]
@@ -181,7 +179,6 @@ class AnalyzerGUI:
             height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
             height_scale = height / float(self.out_video_dim[1])
             width_scale = width / float(self.out_video_dim[0])
-            scale_percent = 1
             if width_scale > height_scale:
                 scale_percent = width_scale
             else:
@@ -208,11 +205,6 @@ class AnalyzerGUI:
                 # Print actual video frame on the gui
                 self.print_on_GUI(frameWithBB, self.video_label, self.out_video_dim)
 
-                # just some testing to create the db for svm
-                # if frame_counter % 100 == 0:
-                #     for box in bounding_boxes:
-                #         label_hist(frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]])
-
                 # Print Map with actual room
                 found = 0
                 if len(paintings_matched) != 0:
@@ -230,7 +222,6 @@ class AnalyzerGUI:
                 for j in range(self.max_num_matched_paint):
                     if j < len(paintings_matched) and paintings_matched[j]:
                         height, width, channels = paintings_matched[j][0]['im'].shape
-                        scale_rect = 1
                         height_scale = height / float(self.matched_dim[1])
                         width_scale = width / float(self.matched_dim[0])
                         if width_scale > height_scale:
@@ -248,7 +239,7 @@ class AnalyzerGUI:
                     else:
                         self.print_on_GUI(self.black_matched_frame, self.matched_array[j], self.matched_dim)
 
-                #display rectified images un GUI
+                # Display rectified images un GUI
                 for j in range(self.max_num_rect_paint):
                     if len(rectified_images) > 0 and j < len(rectified_images) and np.sum(rectified_images[j]) != None:
                         height, width, channels = rectified_images[j].shape
@@ -269,7 +260,7 @@ class AnalyzerGUI:
                     else:
                         self.print_on_GUI(self.black_rectified_frame, self.rectified_array[j], self.rectified_dim)
 
-                #save frame and bounding boxes for computing precision
+                # Save frame and bounding boxes for computing precision
                 if frame_counter > 0 and (frame_counter % 10) == 0:
                     bb_file = open(bb_folder_name + "/frame:" + str(frame_counter) + ".txt", 'w')
                     for i, box in enumerate(bounding_boxes):
@@ -283,7 +274,6 @@ class AnalyzerGUI:
 
                 # write ROI and matched paintings ona CSV file
                 for i, box in enumerate(bounding_boxes):
-                    matched_string = ""
                     box_string = ""
                     for j in range(3):
                         box_string += str(box[j]) + ","
@@ -296,9 +286,6 @@ class AnalyzerGUI:
                                               paintings_matched[i][3]['filename'] + "," +
                                               paintings_matched[i][4]['filename'] + "\n")
 
-                # if cv2.waitKey(25) & 0xFF == ord('q'):
-                #     break
-
                 # Append actual frame to create a video at the end
                 imgs.append(self.get_screenshot())
                 frame_counter += 1
@@ -306,7 +293,7 @@ class AnalyzerGUI:
             else:
                 break
 
-        # Try to build a video of the entire video analyzer
+        # Build a video of the entire video analyzer
         try:
             height, width, layers = imgs[1].shape
             fourcc = VideoWriter_fourcc(*'MP42')
