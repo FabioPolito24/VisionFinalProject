@@ -341,7 +341,10 @@ class AnalyzerGUI:
         y = self.master.winfo_rooty()
         xx = x + self.master.winfo_width()
         yy = y + self.master.winfo_height()
-        return cv2.cvtColor(np.array(ImageGrab.grab(bbox=(x, y, xx, yy)).convert('RGB')), cv2.COLOR_RGB2BGR)
+        try:
+            return cv2.cvtColor(np.array(ImageGrab.grab(bbox=(x, y, xx, yy)).convert('RGB')), cv2.COLOR_RGB2BGR)
+        except:
+            pass
 
 
 if __name__ == "__main__":
