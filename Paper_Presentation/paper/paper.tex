@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{csvsimple}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -41,12 +42,55 @@ All frames are exctracted in sequence from the video and processed independently
 
 \subsection{Preprocessing}
 First of all, each frame is converted into black and white and processed with a bilateral filter to remove noise while preserving at the same time the edges.\\
-After that, we apply otsu threshold  with the aim to separate the pixels into background and paintings, due to their chromatic difference.
+After that, we apply otsu threshold  with the aim to separate the pixels into background and paintings, due to their chromatic difference.\\
+To obtain a better result we improve the binary image by employing the closing operator to remove morphological noise like small holes.\\ 
+
+\bigskip
+
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\columnwidth]{../detection_pipeline/1_otsu_threshold.png}
+  \caption{OTSU threshold.}
+  \label{fig:ROC_curve}
+\end{figure}
+
+\bigskip
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\columnwidth]{../detection_pipeline/2_closing.png}
+  \caption{Closing.}
+  \label{fig:ROC_curve}
+\end{figure}
+
+\bigskip
 
 \subsection{Bounding Box detection}
 Using the function findContours of OpenCV, we obtain the outlines of the objects in the foreground, among which there will also be the paintings that we are looking for.\\
+\bigskip
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\columnwidth]{../detection_pipeline/3_contours.png}
+  \caption{Contours.}
+  \label{fig:ROC_curve}
+\end{figure}
+
+\bigskip
 We then create the bounding box containing this contours and to eliminate the rectangles identified inside the paintings, we keep only the external ones and eliminate those contained within others.\\
 Among the remaining bounding boxes, those that are not judged as paintings by an SVM model, will get discarded.
+
+\bigskip
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\columnwidth]{../detection_pipeline/4_bb.png}
+  \caption{Bounding Boxes.}
+  \label{fig:ROC_curve}
+\end{figure}
+
+\bigskip
 
 \subsection{SVM}
 To classify the ROI proposed by the previous pipeline, an SVM model is been trained.\\
@@ -196,6 +240,45 @@ Average F-Measure& 0.904\\
 \label{tab1}
 \end{center}
 \end{table}
+
+\subsection{SVM evaluation}
+The first approach, in order to test our's model's ability to predict new data and to flag problems like overfitting or selection bias, is a 10-fold cross-validation performed on the training set.
+The average of the values computed in the loop resulted in an accuracy of 88.85%.\\
+After this first check, we create a test set composed of 304 instances and calculated other score measurements on it.\\
+\begin{itemize}
+   \item  Accuracy = 0.862
+\end{itemize}
+\begin{itemize}
+   \item  Recall = 0.798
+\end{itemize}
+\begin{itemize}
+   \item  F1 = 0.825
+\end{itemize}
+\bigskip
+
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\columnwidth]{../svm_curves/confusion_matrix.png}
+  \caption{Cofusion Matrix.}
+  \label{fig:Cofusion Matrix}
+\end{figure}
+
+\bigskip
+
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\columnwidth]{../svm_curves/ROC_curve.png}
+  \caption{ROC.}
+  \label{fig:ROC_curve}
+\end{figure}
+
+\bigskip
+\bigskip
+\bigskip
+
+
 
 
 \section{Discussions}
