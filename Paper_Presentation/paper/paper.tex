@@ -6,6 +6,7 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{csvsimple}
+\usepackage{hyperref}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -168,7 +169,7 @@ In our case the only wanted class is the person one, for ease of use the network
 \label{fig_People_detection}
 \end{figure}
 
-A little problem has arisen due to the high number of paintings representing persons, in fact the network detect them also inside the paintings, to prevent these false positive we added a new control on the pixel position in order to cut out all the people detected inside a bounding box previously classified as a painting.
+A little problem has arisen due to the high number of paintings representing persons as show in figure \ref{fig_People_detection_error}, in fact the network detect them also inside the paintings, to prevent these false positive we added a new control on the pixel position in order to cut out all the people detected inside a bounding box previously classified as a painting.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../people_detection/people_error.png}}

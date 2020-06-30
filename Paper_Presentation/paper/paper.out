@@ -1,0 +1,18 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Related Works}{}% 2
+\BOOKMARK [1][-]{section.3}{Painting Detection}{}% 3
+\BOOKMARK [2][-]{subsection.3.1}{Preprocessing}{section.3}% 4
+\BOOKMARK [2][-]{subsection.3.2}{Bounding Box detection}{section.3}% 5
+\BOOKMARK [2][-]{subsection.3.3}{SVM}{section.3}% 6
+\BOOKMARK [2][-]{subsection.3.4}{Precision boosting and paintings segmentation}{section.3}% 7
+\BOOKMARK [1][-]{section.4}{Painting Retrieval}{}% 8
+\BOOKMARK [1][-]{section.5}{Painting Rectification}{}% 9
+\BOOKMARK [2][-]{subsection.5.1}{Four points transform}{section.5}% 10
+\BOOKMARK [2][-]{subsection.5.2}{Images alignment}{section.5}% 11
+\BOOKMARK [1][-]{section.6}{People Detection}{}% 12
+\BOOKMARK [1][-]{section.7}{People Localization}{}% 13
+\BOOKMARK [1][-]{section.8}{Painting Replacement in the 3D Model}{}% 14
+\BOOKMARK [1][-]{section.9}{Metrics and Precision}{}% 15
+\BOOKMARK [2][-]{subsection.9.1}{SVM evaluation}{section.9}% 16
+\BOOKMARK [1][-]{section.10}{Discussions}{}% 17
+\BOOKMARK [1][-]{section*.2}{References}{}% 18
