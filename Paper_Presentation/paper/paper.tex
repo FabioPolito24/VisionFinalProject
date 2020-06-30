@@ -29,21 +29,12 @@ Each frame is processed with image processing techniques in order to localize pa
 At the same time, an artificial neural network (YoloV3) detects people, which are localized inside a room of the museum.
 
 \section{Related Works}
-To remove camera noise but maintains the contours a  Bilateral filter is used.
-C. Tomasi and R. Manduchi, "Bilateral filtering for gray and color images," Sixth International Conference on Computer Vision (IEEE Cat. No.98CH36271), Bombay, India, 1998, pp. 839-846, doi: 10.1109/ICCV.1998.710815.
-
-OTSU is an automatic thresholding method widely used when the numbers of pixels in each class are close to each other.
-J. Zhang and J. Hu, "Image Segmentation Based on 2D Otsu Method with Histogram Analysis," 2008 International Conference on Computer Science and Software Engineering, Hubei, 2008, pp. 105-108, doi: 10.1109/CSSE.2008.206.
-
-Opencv Find Counturs function is been used to find counturs in a previouslly modified frame in order to detect painting
-Suzuki, S., and Be, K. (1985). Topological structural analysis of digitized binary images by border following. Computer Vision, Graphics, and Image Processing 30, 32–46. doi:10.1016/0734-189X(85)90016-7.
-
-The functions approxPolyDP approximate a curve or a polygon with another curve/polygon with less vertices so that the distance between them is less or equal to the specified precision. It uses the Douglas-Peucker algorithm 
-
-ORB E. Rublee, V. Rabaud, K. Konolige and G. Bradski, "ORB: An efficient alternative to SIFT or SURF," 2011 International Conference on Computer Vision, Barcelona, 2011, pp. 2564-2571, doi: 10.1109/ICCV.2011.6126544.
-
-YoloV3 is a famous neural network for fast object detection, will be used in this paper for people detection
-Redmon, Joseph and Ali Farhadi. “YOLOv3: An Incremental Improvement.” ArXiv abs/1804.02767 (2018): n. pag.
+To remove camera noise but maintains the contours a  Bilateral filter\cite{b1} is used.
+OTSU\cite{b2} is an automatic thresholding method widely used when the numbers of pixels in each class are close to each other.
+Opencv Find Counturs\cite{b3} function is been used to find counturs in a previouslly modified frame in order to detect painting
+The functions approxPolyDP\cite{b4} approximate a curve or a polygon with another curve/polygon with less vertices so that the distance between them is less or equal to the specified precision. It uses the Douglas-Peucker algorithm  
+ORB\cite{b5} is a feature detection algorithm like SIFT while being almost two orders of magnitude faster.
+YoloV3 \cite{b5}  is a famous neural network for fast object detection, will be used in this paper for people detection
 
 \section{Painting Detection}
 All frames are exctracted in sequence from the video and processed independently. The followed pipeline is explained afterwards.
@@ -178,7 +169,6 @@ To calculate the precision of the presented method we took almost 10 random fram
 \label{fig_labeling}
 \end{figure}
 
-
 \begin{table}[htbp]
 \caption{Metrics Table}
 \begin{center}
@@ -196,13 +186,17 @@ copy& More table copy$^{\mathrm{a}}$& &  \\
 \end{center}
 \end{table}
 
-\section*{Discussions}
-L’approccio seguito si fonda sull’assunzione che nel video in questione sia presente una buona differenza cromatica tra background e paintings. nel caso questa condizione non sia verificata, come nel caso di una inquadratura più ampia comprendente non solo quadri e parete ma anche corridoio ad esempio, otsu non riesce a dividere correttamente quadri da background e le performance della detection calano.
-cronologia degli approcci testati
-inizialmente si è pensato di utilizzare Canny, preceduto da una rimozione iniziale di rumore prodotta dal bilateral filter, per trovare i bordi su cui applicare findContours. i risultati non erano del tutto soddisfacenti in quanto spesso i contorni prodotti da canny non individuavano con precisione il quadro. abbiamo quindi optato per una soluzione basata sul thresholding dell’immagine rgb, che come già spiegato in precedenza è seguita da un raffinamento effettuato a livello hsv. Si è anche testato un metodo basata solo su immagini hsv, che ha rivelato essere molto performante in certe situazioni (in ogni frame vi è una chiara distinzione tra quadro e background) ma meno stabile rispetto al metodo precedentemente esposto.
+
+\section{Discussions}
+Our approach is based on the assumption that input videos contain a relevant chromatic difference between paintings and background. when this assumption doesn’t occur, for example in the case of a wider shot comprising hallway too, otsu doesn’t manage to correctly differentiate paintings from the rest, which leads to worse performances.
+
+\subsection{tested methods history}
+At the beginning the idea was to use Canny, preceded by an initial noise removal obtained by bilateral filter, in order to find the edges on which to apply findContours opencv function. The results were not entirely satisfactory as the outlines often produced by canny did not accurately identify the picture. We therefore opted for a solution based on the thresholding of the RGB image, which as already explained above is followed by a refinement carried out at the hsv level. A method based only on hsv images was also tested, which revealed to be very performing in certain situations (in each frame there is a clear distinction between picture and background) but less stable than the previously exposed method.
+It was then necessary to face the fact that each method, being based solely on image processing techniques, produced many false positives. The simplest way, according to which only bounding boxes containing a painting that had been matched on the database should have been shown, was discarded due to the limited database. many correctly identified paintings were in fact discarded because they were not present in the database. The solution adopted was to train an svm with the goal to classify what is a painting and what is not.
 
 
-\section*{References}
+
+\section{References}
 Please number citations consecutively within brackets \cite{b1}. The 
 sentence punctuation follows the bracket \cite{b2}. Refer simply to the reference 
 number, as in \cite{b3}---do not use ``Ref. \cite{b3}'' or ``reference \cite{b3}'' except at 
@@ -223,13 +217,12 @@ For papers published in translation journals, please give the English
 citation first, followed by the original foreign-language citation \cite{b6}.
 
 \begin{thebibliography}{00}
-\bibitem{b1} Tareen, Shaharyar Ahmed Khan, and Zahra Saleem. "A comparative analysis of sift, surf, kaze, akaze, orb, and brisk." 2018 International conference on computing, mathematics and engineering technologies (iCoMET). IEEE, 2018.
-\bibitem{b2} J. Clerk Maxwell, A Treatise on Electricity and Magnetism, 3rd ed., vol. 2. Oxford: Clarendon, 1892, pp.68--73.
-\bibitem{b3} I. S. Jacobs and C. P. Bean, ``Fine particles, thin films and exchange anisotropy,'' in Magnetism, vol. III, G. T. Rado and H. Suhl, Eds. New York: Academic, 1963, pp. 271--350.
-\bibitem{b4} K. Elissa, ``Title of paper if known,'' unpublished.
-\bibitem{b5} R. Nicole, ``Title of paper with only first word capitalized,'' J. Name Stand. Abbrev., in press.
-\bibitem{b6} Y. Yorozu, M. Hirano, K. Oka, and Y. Tagawa, ``Electron spectroscopy studies on magneto-optical media and plastic substrate interface,'' IEEE Transl. J. Magn. Japan, vol. 2, pp. 740--741, August 1987 [Digests 9th Annual Conf. Magnetics Japan, p. 301, 1982].
-\bibitem{b7} M. Young, The Technical Writer's Handbook. Mill Valley, CA: University Science, 1989.
+\bibitem{b1} C. Tomasi and R. Manduchi, "Bilateral filtering for gray and color images," Sixth International Conference on Computer Vision (IEEE Cat. No.98CH36271), Bombay, India, 1998, pp. 839-846, doi: 10.1109/ICCV.1998.710815..
+\bibitem{b2} J. Zhang and J. Hu, "Image Segmentation Based on 2D Otsu Method with Histogram Analysis," 2008 International Conference on Computer Science and Software Engineering, Hubei, 2008, pp. 105-108, doi: 10.1109/CSSE.2008.206.
+\bibitem{b3}Suzuki, S., and Be, K. (1985). Topological structural analysis of digitized binary images by border following. Computer Vision, Graphics, and Image Processing 30, 32–46. doi:10.1016/0734-189X(85)90016-7.
+\bibitem{b4} 
+\bibitem{b5} E. Rublee, V. Rabaud, K. Konolige and G. Bradski, "ORB: An efficient alternative to SIFT or SURF," 2011 International Conference on Computer Vision, Barcelona, 2011, pp. 2564-2571, doi: 10.1109/ICCV.2011.6126544.
+\bibitem{b6}Redmon, Joseph and Ali Farhadi. “YOLOv3: An Incremental Improvement.” ArXiv abs/1804.02767 (2018): n. pag.
 \end{thebibliography}
 
 \end{document}
