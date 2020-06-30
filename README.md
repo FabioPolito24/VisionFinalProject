@@ -1,4 +1,12 @@
 # VisionFinalProject
+## How to use this code:
+1. Install requirements
+2. Download Weights for yoloV3 : https://pjreddie.com/media/files/yolov3.weights
+3. Put them in yolo/weights as yolov3.weights
+4. Run save_key_points.py to create local db of keypoints
+5. Run main.py and Enjoi the project
+
+## Description of the functionality:
 ### Painting detection: predict a ROI for each painting
 - Given an input video, your code should output a list of bounding boxes (x, y, w, h), being (x,y) the upper-left corner, each containing one painting.
 - Create an interface to visualize given an image the ROI of a painting.
@@ -25,40 +33,66 @@
 ## PaintingDetection Pipeline
 1. Converting From rgb to gray each frame
 2. Apply Bilateral filter
-3. Edge finding with Canny
+3. Otsu thresholding
 4. Dilate edges to detect better contours
 5. Find contours with Opencv standard function
 6. Filter Contour to obtain only the external ones
 
 ## PaintingRectification Pipeline
-1. TODO...
+### Method 1
+1. ApproxPolydp
+2. If we have exactly 4 vertexies continue
+3. Calculate Homography matrix for a standard rectangle
+4. WarpPerspective to rectifie the paintings
+### Method 2
+1. If we have a good painting retrived from db
+2. Use keypoints calculated to compute Homography matrix
+3. WarpPerspective to rectifie the paintings
 
 ## PaintingRetrival Pipeline
-1. TODO...
+0. With ORB we previously calculated and stored keypoints using the pickle module for all db paintings
+1. Keypoint detection in actual Bounding box with ORB
+2. Ratio test ratio test proposed by D. Lowe in the SIFT paper is performed on all db painting
+3. If ratio i greater than a threshold is a good match and continue
+4. Save best 5 match in a csv file
+5. Display only the best one on the gui
+
 
 ## People Detection Pipeline
 1. Detection made with YoloV3 trained on COCO dataset.
-
-How to add it to the project:
-- Download Weights: https://pjreddie.com/media/files/yolov3.weights
-- Put them in yolo/weights as yolov3.weights
-- Include Yolo/people_detector.py in yout project
-- Initialize (once) the network: detector = PeopleDetector()
-- To detect people call method passing a simple frame from videocapture frame: detector.detectPeopleFromFrame(frame)
+2. If the network dont'find any persons will return None
+3. Before print all bb a check is done with prevuosly painting founded,if a person is inside a paint discard it
+4. Otherwise print bounding bosex inn red with function: writLabels()
+### People Localization
+1. If we have a good painting matched in db continue
+2. Find painting position on museum map
+3. Assuming people in actual frame is in the same room of the painting
+4. Print a red dot in the selected room
 
 ## Progect structure:
     .
+    ├── main.py                        # main program
+    ├── outputs                        # Video edited with bounding box
+    │   ├── VIRB0395
+    │   └── ...                        # videos...
     ├── PaintingDetection
-    │   ├── outputs                    # Video edited with bounding box
-    │   │   ├── VIRB0395
-    │   │   └── ...                    # videos...
-    │   ├── PaintingDetection_main.py  # Main of Painting detection
+    │   ├── general_utils.py           # general functions
     │   ├── detection_utils.py         # detection functions
     │   ├── rectification_utils.py     # rectification functions
     │   ├── retrival_utils.py          # retrival functions
+    │   ├── histogram.py               # histogram
+    │   ├── save_key_points.py         # script to generate keypoits db
     │   └── ...
     ├── painting_db                    # Database of all Paintings
     ├── videos                         # Example videos ready to use
+    ├── PeopleLocalization             # Example videos ready to use
+    │   ├── images
+    │   │   └── map.png                # map of the museum
+    │   └── peopleLocalizator.py       # Script that print red dot on actual room
+    ├── SVM                            # SVM to determine if a bb contains a painting or not
+    │   ├── dbCreator.py
+    │   └── ROI_classificator.py
+    ├── PerformanceMesures             # Frame with hand made label and automatically generated once
     └── yolo                           # YoloV3 NN used for people detection
         ├── ...                        # Other utilities for yolo
         ├── weights                    # Folder containing weights
