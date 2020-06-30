@@ -27,7 +27,7 @@
 \section{Introduction}
 In this paper, we present a method to detect and identify paintings starting from a video taken inside “Galleria Estensi, Modena”.\\
 Each frame is processed with image processing techniques in order to localize paintings, rectify distortions, and fetch from the database the corresponding work of art.\\
-At the same time, an artificial neural network (YoloV3) detects people, which are localized inside a room of the museum.
+At the same time, an artificial neural network (YoloV3) detects people, which are localized inside a room of the museum.\\
 
 \section{Related Works}
 To remove camera noise but maintains the contours a  Bilateral filter\cite{b1} is used.
@@ -35,7 +35,7 @@ OTSU\cite{b2} is an automatic thresholding method widely used when the numbers o
 Opencv Find Counturs\cite{b3} function is been used to find counturs in a previouslly modified frame in order to detect painting
 The functions approxPolyDP\cite{b4} approximate a curve or a polygon with another curve/polygon with less vertices so that the distance between them is less or equal to the specified precision. It uses the Douglas-Peucker algorithm  
 ORB\cite{b5} is a feature detection algorithm like SIFT while being almost two orders of magnitude faster.
-YoloV3 \cite{b5}  is a famous neural network for fast object detection, will be used in this paper for people detection
+YoloV3 \cite{b5}  is a famous neural network for fast object detection that will be used in this paper for people detection.\\
 
 \section{Painting Detection}
 All frames are exctracted in sequence from the video and processed independently. The followed pipeline is explained afterwards.
@@ -106,7 +106,7 @@ The model returns False if the rectangle doesn't contain a painting and True if 
 To obtain a better segmentation within each bounding box we apply a further refinement of the images.\\
 Observing the low light in the videos that were provided to us, the paintings\\
 are significantly darker compared to their frame and do not correspond to the brightness of the paintings in the database. This leads to poor precision in the retrieval step. To cope with this problem, the brightness component is increased for each previously found bounding box.\\
-Afterward, by transforming its format from BGR to HSV and then applying the otsu threshold again, we are able to obtain a more precise distinction between painting and frame/background, which will then be used during the retrieval and rectification steps.
+Afterward, by transforming its format from BGR to HSV and then applying the otsu threshold again, we are able to obtain a more precise distinction between painting and frame/background, which will then be used during the retrieval and rectification steps.\\
 
 
 \section{Painting Retrieval}
@@ -131,7 +131,7 @@ For false matches, there will likely be a number of other false matches within s
 In our implementation we reject all matches in which the distance ratio is greater than 0.75.\\
 This allows us to keep the number of correctly retrieved paintings still high but at the same time to decrease the number of false positive.
 A ranking with the 5 best matches found is then created and saved to a CSV file to show the results.\\
-To understand if the painting is actually recognized among those in the DB, the average of the key points matched among the best 5 ranked is calculated and, if the first one differs from it for more than significant value, it is considered as correct and shown on the interface.
+To understand if the painting is actually recognized among those in the DB, the average of the key points matched among the best 5 ranked is calculated and, if the first one differs from it for more than significant value, it is considered as correct and shown on the interface.\\
 
 
 \section{Painting Rectification}
@@ -148,13 +148,13 @@ This pipeline is applied to the paintings that don't get a match on the database
 \label{fig_Painting_detection_and_rectification}
 \end{figure}
 
-\subsection{alignImages}
+\subsection{Images alignment}
 Not all the paintings inside the museum have a rectangular shape. This means that the approximation found by approxPolyDP does not consist of 4 vertices, making the method just explained impractical.\\
 The approach that is used in this case is based on the common keypoints found between the distorted image and the corresponding match in the database.\\
 Through ORB feature matching algorithm the key points are computed from each bounding boxes detected by the previous pipeline and subsequently, to determine the best matches between it and the images of the database, the ratio test is used.\\
 From them we calculate the homography matrix and
 to avoid mismatches, the RANSAC algorithm is exploited.\\
-To obtain a better result also the inverse warping algorithm is utilized.
+To obtain a better result also the inverse warping algorithm is utilized.\\
 
 \section{People Detection}
 A neural network (YoloV3) is used for people detection.\\
@@ -184,7 +184,7 @@ A little problem has arisen due to the high number of paintings representing per
 
 \section{People Localization}
 Starting from a previously detected and retrieved painting from the database, we search the corresponding room in csv file, then a little red dot is printed on the museum image map. With this method we assume that all the painting detected and the persons are in the same room.
-Moreover the localization will work only if the painting matched is considered safe that means the painting need to have a good level of matches, otherwise localization is not active.
+Moreover the localization will work only if the painting matched is considered safe that means the painting need to have a good level of matches, otherwise localization is not active.\\
 
 \section{Painting Replacement in the 3D Model}
 The pipeline followed to accomplish this task is similar to the one explained before with a little difference. It starts directly with the hsv version of the image taken as input (a screenshot from the 3d model); then we apply Otsu threshold, followed by noise removal thanks to opening or closing process, keeping the one that maximizes the number of contours found. At this point we loop over each contour and find an approximation of itself with approxPolyDP; if the approximation has a shape described by 4 vertices, we estimate keypoints with orb and fetch the corresponding image from the database. Once this is done, if the image fetched is judged as a good match, we align that image with respect to the screenshot’s image plane and superimpose the result on the input image.
@@ -201,12 +201,10 @@ The pipeline followed to accomplish this task is similar to the one explained be
 \label{fig_3d_model_2}
 \end{figure}
 
-What is worth to mention is that the alignment function that we use in this process is the same of the main pipeline of painting rectification. This function in fact takes as input two images and project the first one on the plane of the second. If the second image is a painting fetched from the database, it means that the first image is rectified; if instead the second image is a painting coming from a frame/screenshot, it means that we want to distort an image in order to match the perspective of that painting.
-
-
+What is worth to mention is that the alignment function that we use in this process is the same of the main pipeline of painting rectification. This function in fact takes as input two images and project the first one on the plane of the second. If the second image is a painting fetched from the database, it means that the first image is rectified; if instead the second image is a painting coming from a frame/screenshot, it means that we want to distort an image in order to match the perspective of that painting.\\
 
 \section{Metrics and Precision}
-To calculate the precision of the presented method we took almost 10 random frame for 6 different videos and labeled all the paintings by hand using a tool for labeling (normally used for yolo labels). Then with a custom code we calculated precision recall… comparing hand made labels with automatically generated ones.
+To calculate the precision of the presented method we took almost 10 random frame for 6 different videos and labeled all the paintings by hand using a tool for labeling (normally used for yolo labels). Then with a custom code we calculated some metrics comparing hand made labels with automatically generated ones.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../Labeling_precision_metrics/Precision_Labeling.png}}
@@ -279,8 +277,6 @@ After this first check, we create a test set composed of 304 instances and calcu
 \bigskip
 
 
-
-
 \section{Discussions}
 Our approach is based on the assumption that input videos contain a relevant chromatic difference between paintings and background. when this assumption doesn’t occur, for example in the case of a wider shot comprising hallway too, otsu doesn’t manage to correctly differentiate paintings from the rest, which leads to worse performances.
 \subsection*{Tested methods history}
@@ -288,9 +284,6 @@ At the beginning the idea was to use Canny, preceded by an initial noise removal
 It was then necessary to face the fact that each method, being based solely on image processing techniques, produced many false positives. The simplest way, according to which only bounding boxes containing a painting that had been matched on the database should have been shown, was discarded due to the limited database. many correctly identified paintings were in fact discarded because they were not present in the database. The solution adopted was to train an svm with the goal to classify what is a painting and what is not.
 
 
-\section*{}
-\section*{}
-\section*{}
 \begin{thebibliography}{00}
 \bibitem{b1} C. Tomasi and R. Manduchi, "Bilateral filtering for gray and color images," Sixth International Conference on Computer Vision (IEEE Cat. No.98CH36271), Bombay, India, 1998, pp. 839-846, doi: 10.1109/ICCV.1998.710815..
 \bibitem{b2} J. Zhang and J. Hu, "Image Segmentation Based on 2D Otsu Method with Histogram Analysis," 2008 International Conference on Computer Science and Software Engineering, Hubei, 2008, pp. 105-108, doi: 10.1109/CSSE.2008.206.
