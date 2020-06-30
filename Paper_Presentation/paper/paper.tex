@@ -28,6 +28,23 @@ In this paper, we present a method to detect and identify paintings starting fro
 Each frame is processed with image processing techniques in order to localize paintings, rectify distortions, and fetch from the database the corresponding work of art.\\
 At the same time, an artificial neural network (YoloV3) detects people, which are localized inside a room of the museum.
 
+\section{Related Works}
+To remove camera noise but maintains the contours a  Bilateral filter is used.
+C. Tomasi and R. Manduchi, "Bilateral filtering for gray and color images," Sixth International Conference on Computer Vision (IEEE Cat. No.98CH36271), Bombay, India, 1998, pp. 839-846, doi: 10.1109/ICCV.1998.710815.
+
+OTSU is an automatic thresholding method widely used when the numbers of pixels in each class are close to each other.
+J. Zhang and J. Hu, "Image Segmentation Based on 2D Otsu Method with Histogram Analysis," 2008 International Conference on Computer Science and Software Engineering, Hubei, 2008, pp. 105-108, doi: 10.1109/CSSE.2008.206.
+
+Opencv Find Counturs function is been used to find counturs in a previouslly modified frame in order to detect painting
+Suzuki, S., and Be, K. (1985). Topological structural analysis of digitized binary images by border following. Computer Vision, Graphics, and Image Processing 30, 32–46. doi:10.1016/0734-189X(85)90016-7.
+
+The functions approxPolyDP approximate a curve or a polygon with another curve/polygon with less vertices so that the distance between them is less or equal to the specified precision. It uses the Douglas-Peucker algorithm 
+
+ORB E. Rublee, V. Rabaud, K. Konolige and G. Bradski, "ORB: An efficient alternative to SIFT or SURF," 2011 International Conference on Computer Vision, Barcelona, 2011, pp. 2564-2571, doi: 10.1109/ICCV.2011.6126544.
+
+YoloV3 is a famous neural network for fast object detection, will be used in this paper for people detection
+Redmon, Joseph and Ali Farhadi. “YOLOv3: An Incremental Improvement.” ArXiv abs/1804.02767 (2018): n. pag.
+
 \section{Painting Detection}
 All frames are exctracted in sequence from the video and processed independently. The followed pipeline is explained afterwards.
 
@@ -71,7 +88,7 @@ This measure performs well because correct matches need to have the closest neig
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../Orb_matches/match3.png}}
 \caption{Orb matches}
-\label{fig}
+\label{fig_Orb_matches}
 \end{figure}
 
 For false matches, there will likely be a number of other false matches within similar distances due to the high dimensionality of the feature space.\\
@@ -92,9 +109,8 @@ This pipeline is applied to the paintings that don't get a match on the database
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../detection_and_rectification/top_association_vid05.png}}
 \caption{Painting detection and rectification}
-\label{fig}
+\label{fig_Painting_detection_and_rectification}
 \end{figure}
-
 
 \subsection{alignImages}
 Not all the paintings inside the museum have a rectangular shape. This means that the approximation found by approxPolyDP does not consist of 4 vertices, making the method just explained impractical.\\
@@ -113,7 +129,7 @@ In our case the only wanted class is the person one, for ease of use the network
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../people_detection/paint_and_person.png}}
 \caption{People detection}
-\label{fig}
+\label{fig_People_detection}
 \end{figure}
 
 A little problem has arisen due to the high number of paintings representing persons, in fact the network detect them also inside the paintings, to prevent these false positive we added a new control on the pixel position in order to cut out all the people detected inside a bounding box previously classified as a painting.
@@ -121,32 +137,45 @@ A little problem has arisen due to the high number of paintings representing per
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../people_detection/people_error.png}}
 \caption{People detection error}
-\label{fig}
+\label{fig_People_detection_error}
 \end{figure}
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../people_detection/people_error_fixed.png}}
 \caption{People detection error fixed}
-\label{fig}
+\label{fig_People_detection_error_fixed}
 \end{figure}
-
 
 \section{People Localization}
 Starting from a previously detected and retrieved painting from the database, we search the corresponding room in csv file, then a little red dot is printed on the museum image map. With this method we assume that all the painting detected and the persons are in the same room.
 Moreover the localization will work only if the painting matched is considered safe that means the painting need to have a good level of matches, otherwise localization is not active.
 
-
 \section{Painting Replacement in the 3D Model}
-the pipeline followed to accomplish this task is similar to the one explained before with a little difference. we start directly with the hsv version of the image taken as input (a screenshot from the 3d model); then we apply Otsu threshold, followed by noise removal thanks to opening or closing process, keeping the one that maximizes the number of contours found. At this point we loop over each contour and find an approximation of itself with approxPolyDP; if the approximation has a shape described by 4 vertices, we estimate keypoints with orb and fetch the corresponding image from the database. Once this is done, if the image fetched is judged as a good match, we align that image with respect to the screenshot’s image plane and superimpose the result on the input image.
-what is worth to mention is that the alignment function that we use in this process is the same of the main pipeline of painting rectification. this function in fact takes as input two images and project the first one on the plane of the second. if the second image is a painting fetched from the database, it means that the first image is rectified; if instead the second image is a painting coming from a frame/screenshot, it means that we want to distort an image in order to match the perspective of that painting. 
+The pipeline followed to accomplish this task is similar to the one explained before with a little difference. we start directly with the hsv version of the image taken as input (a screenshot from the 3d model); then we apply Otsu threshold, followed by noise removal thanks to opening or closing process, keeping the one that maximizes the number of contours found. At this point we loop over each contour and find an approximation of itself with approxPolyDP; if the approximation has a shape described by 4 vertices, we estimate keypoints with orb and fetch the corresponding image from the database. Once this is done, if the image fetched is judged as a good match, we align that image with respect to the screenshot’s image plane and superimpose the result on the input image.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.8\columnwidth]{../screenshots_3d_model/screenshot_01.jpg}}
+\caption{3dmodel}
+\label{fig_3d_model}
+\end{figure}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.8\columnwidth]{../screenshots_3d_model/screenshot_03.png}}
+\caption{3d model 2}
+\label{fig_3d_model_2}
+\end{figure}
+
+What is worth to mention is that the alignment function that we use in this process is the same of the main pipeline of painting rectification. this function in fact takes as input two images and project the first one on the plane of the second. if the second image is a painting fetched from the database, it means that the first image is rectified; if instead the second image is a painting coming from a frame/screenshot, it means that we want to distort an image in order to match the perspective of that painting.
+
+
 
 \section{Metrics and Precision}
 To calculate the precision of the presented method we took almost 10 random frame for 6 different videos and labeled all the paintings by hand using a tool for labeling (normally used for yolo labels). Then with a custom code we calculated precision recall… comparing hand made labels with automatically generated ones.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../Labeling_precision_metrics/Precision_Labeling.png}}
-\caption{labeling.}
-\label{fig}
+\caption{labeling}
+\label{fig_labeling}
 \end{figure}
 
 
@@ -167,16 +196,13 @@ copy& More table copy$^{\mathrm{a}}$& &  \\
 \end{center}
 \end{table}
 
+\section*{Discussions}
+L’approccio seguito si fonda sull’assunzione che nel video in questione sia presente una buona differenza cromatica tra background e paintings. nel caso questa condizione non sia verificata, come nel caso di una inquadratura più ampia comprendente non solo quadri e parete ma anche corridoio ad esempio, otsu non riesce a dividere correttamente quadri da background e le performance della detection calano.
+cronologia degli approcci testati
+inizialmente si è pensato di utilizzare Canny, preceduto da una rimozione iniziale di rumore prodotta dal bilateral filter, per trovare i bordi su cui applicare findContours. i risultati non erano del tutto soddisfacenti in quanto spesso i contorni prodotti da canny non individuavano con precisione il quadro. abbiamo quindi optato per una soluzione basata sul thresholding dell’immagine rgb, che come già spiegato in precedenza è seguita da un raffinamento effettuato a livello hsv. Si è anche testato un metodo basata solo su immagini hsv, che ha rivelato essere molto performante in certe situazioni (in ogni frame vi è una chiara distinzione tra quadro e background) ma meno stabile rispetto al metodo precedentemente esposto.
 
-\section*{Acknowledgment}
-
-The preferred spelling of the word ``acknowledgment'' in America is without 
-an ``e'' after the ``g''. Avoid the stilted expression ``one of us (R. B. 
-G.) thanks $\ldots$''. Instead, try ``R. B. G. thanks$\ldots$''. Put sponsor 
-acknowledgments in the unnumbered footnote on the first page.
 
 \section*{References}
-
 Please number citations consecutively within brackets \cite{b1}. The 
 sentence punctuation follows the bracket \cite{b2}. Refer simply to the reference 
 number, as in \cite{b3}---do not use ``Ref. \cite{b3}'' or ``reference \cite{b3}'' except at 
