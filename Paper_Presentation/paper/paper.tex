@@ -37,7 +37,7 @@ Opencv Find Counturs\cite{b3} function is been used to find counturs in a previo
 The functions approxPolyDP\cite{b4} approximate a curve or a polygon with another curve/polygon with less vertices so that the distance between them is less or equal to the specified precision. It uses the Douglas-Peucker algorithm  
 ORB\cite{b5} is a feature detection algorithm like SIFT while being almost two orders of magnitude faster.
 YoloV3 \cite{b5}  is a famous neural network for fast object detection that will be used in this paper for people detection.\\
-A graphical user interfaces has been created to show the work and process automatically the video using tkinter \cite{b12}
+A graphical user interfaces has been created to show the work and process automatically the video using tkinter \cite{b12}\\
 
 \section{Painting Detection}
 All frames are exctracted in sequence from the video and processed independently. The followed pipeline is explained afterwards.
@@ -92,7 +92,6 @@ Among the remaining bounding boxes, those that are not judged as paintings by an
   \label{fig:4_bb}
 \end{figure}
 
-\bigskip
 
 \subsection{SVM}
 To classify the ROI proposed by the previous pipeline, an SVM model is been trained.\\
@@ -115,10 +114,10 @@ Afterward, by transforming its format from BGR to HSV and then applying the otsu
 For the retrieval of the paintings situated in the database we use an approach based on feature detection algorithms.\\ 
 After consulting a paper that performs a comparative analysis between the most well known algorithms ~\cite{b7} to get a general idea of the strengths and weaknesses of the different methods available to us, we carried out some experiments focusing on SIFT, AKAZE and ORB.\\
 The results obtained made us opt for ORB, because overall it gave us more precise results than AKAZE and, unlike SIFT, it’s free of charge, therefore usable without fees in a possible commercial application.\\
-To save time, the key points of the paintings in the database have been previously calculated and stored using the pickle module \cite{b8}.\\
-It implements binary protocols for serializing and de-serializing a Python object structure.\\
+To save time, the key points of the paintings in the database have been previously calculated and stored using the pickle module \cite{b8}.
+It implements binary protocols for serializing and de-serializing a Python object structure.
 This data is loaded only once during the launch of the program.
-The key points are computed from the bounding boxes detected by the previously described pipeline and afterward (figure \ref{fig_Orb_matches}), to determine the best matches, the ratio test proposed by D. Lowe in the SIFT paper is performed \cite{b9}.\\
+The key points are computed from the bounding boxes detected by the previously described pipeline and afterward (figure ~\ref{fig_Orb_matches}), to determine the best matches, the ratio test proposed by D. Lowe in the SIFT paper is performed \cite{b9}.\\
 This measure is obtained by comparing the distance of the closest neighbor to that of the second-closest neighbor.\\
 This measure performs well because correct matches need to have the closest neighbor significantly closer than the closest incorrect match to achieve reliable matching.\\
 
@@ -130,9 +129,9 @@ This measure performs well because correct matches need to have the closest neig
 \bigskip
 
 For false matches, there will likely be a number of other false matches within similar distances due to the high dimensionality of the feature space.\\
-In our implementation we reject all matches in which the distance ratio is greater than 0.75.\\
+In our implementation we reject all matches in which the distance ratio is greater than 0.75.
 This allows us to keep the number of correctly retrieved paintings still high but at the same time to decrease the number of false positive.
-A ranking with the 5 best matches found is then created and saved to a CSV file to show the results.\\
+A ranking with the 5 best matches found is then created and saved to a CSV file to show the results.
 To understand if the painting is actually recognized among those in the DB, the average of the key points matched among the best 5 ranked is calculated and, if the first one differs from it for more than significant value, it is considered as correct and shown on the interface.\\
 
 
@@ -170,7 +169,7 @@ In our case the only wanted class is the person one, for ease of use the network
 \label{fig_People_detection}
 \end{figure}
 
-A little problem has arisen due to the high number of paintings representing persons as show in figure \ref{fig_People_detection_error}, in fact the network detect them also inside the paintings, to prevent these false positive we added a new control on the pixel position in order to cut out all the people detected inside a bounding box previously classified as a painting \ref{fig_People_detection_error}.
+A little problem has arisen due to the high number of paintings representing persons as show in figure \ref{fig_People_detection_error}, in fact the network detect them also inside the paintings, to prevent these false positive we added a new control on the pixel position in order to cut out all the people detected inside a bounding box previously classified as a painting, the result is shown in figure\ref{fig_People_detection_error_fixed}.\\
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../people_detection/people_error.png}}
@@ -183,6 +182,8 @@ A little problem has arisen due to the high number of paintings representing per
 \caption{People detection error fixed}
 \label{fig_People_detection_error_fixed}
 \end{figure}
+
+\bigskip
 
 \section{People Localization}
 Starting from a previously detected and retrieved painting from the database, we search the corresponding room in csv file, then a little red dot is printed on the museum image map. With this method we assume that all the painting detected and the persons are in the same room.
@@ -207,7 +208,6 @@ To calculate the precision of the presented method we took almost 10 random fram
 \caption{Labeling}
 \label{fig_labeling}
 \end{figure}
-\bigskip
 
 \begin{table}[htbp]
 \caption{Performances}
@@ -278,12 +278,13 @@ A graphical user interface has been created using tkinter library \cite{b12} to 
 Two different threads run at the same time, one for the gui and the other one for our pipeline.
 After a complete analysis, a new video is created showing what the interface has displayed for the entire time of its utilization.
 
+\bigskip
 
 \section{Discussions}
 Our approach is based on the assumption that input videos contain a relevant chromatic difference between paintings and background. when this assumption doesn’t occur, for example in the case of a wider shot comprising hallway too, otsu doesn’t manage to correctly differentiate paintings from the rest, which leads to worse performances.
 \subsection*{Tested methods history}
 At the beginning the idea was to use Canny, preceded by an initial noise removal obtained by bilateral filter, in order to find the edges on which to apply findContours opencv function. The results were not entirely satisfactory as the outlines often produced by canny did not accurately identify the picture. We therefore opted for a solution based on the thresholding of the RGB image, which as already explained above is followed by a refinement carried out at the hsv level. A method based only on hsv images was also tested, which revealed to be very performing in certain situations (in each frame there is a clear distinction between picture and background) but less stable than the previously exposed method.\\
-It was then necessary to face the fact that each method, being based solely on image processing techniques, produced many false positives. The simplest way, according to which only bounding boxes containing a painting that had been matched on the database should have been shown, was discarded due to the limited database. many correctly identified paintings were in fact discarded because they were not present in the database. The solution adopted was to train an svm with the goal to classify what is a painting and what is not.
+It was then necessary to face the fact that each method, being based solely on image processing techniques, produced many false positives. The simplest way, according to which only bounding boxes containing a painting that had been matched on the database should have been shown, was discarded due to the limited database. many correctly identified paintings were in fact discarded because they were not present in the database. The solution adopted was to train an svm with the goal to classify what is a painting and what is not.\\
 
 
 \begin{thebibliography}{00}
