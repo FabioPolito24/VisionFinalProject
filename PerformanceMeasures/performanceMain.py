@@ -29,7 +29,7 @@ def IoU(bb1, bb2, frameW, frameH):
 
 frameW = 1280
 frameH = 720
-files = glob.glob("vid12/*.txt")
+files = glob.glob("vid01/*.txt")
 iou_list = []
 tp = 0
 fp = 0
@@ -57,7 +57,7 @@ for file in files:
 precision = tp / (tp + fp)
 recall = tp / (tp + fn)
 f_measure = 2 * precision * recall / (precision + recall)
-print(np.mean(iou_list))
+print('Average IoU: ', np.mean(iou_list))
 print('FP: ', fp)
 print('FN: ', fn)
 print('TP: ', tp)
