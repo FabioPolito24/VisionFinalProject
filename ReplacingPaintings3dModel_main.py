@@ -97,17 +97,6 @@ def main_3d(img):
     return img
 
 
-# BEFORE RUNNING THIS FILE, change line 11 of retrieval_utils.py:
-# from
-#    with open('paintings_db/db_paintings.pickle', 'rb') as db_paintings_file:
-# to
-#    with open('../paintings_db/db_paintings.pickle', 'rb') as db_paintings_file:
-
-# BEFORE RUNNING THIS FILE, change line 11 of ROI_classificator.py:
-# from
-#       with open('svm/model.pickle', 'rb') as model_file:
-# to
-#       with open('../svm/model.pickle', 'rb') as model_file:
 if __name__ == '__main__':
-    img = cv2.imread('../screenshots_3d_model/screenshot_03.png', cv2.IMREAD_COLOR)
+    img = cv2.imread('screenshots_3d_model/screenshot_03.png', cv2.IMREAD_COLOR)
     main_3d(img)
