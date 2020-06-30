@@ -37,6 +37,7 @@ Opencv Find Counturs\cite{b3} function is been used to find counturs in a previo
 The functions approxPolyDP\cite{b4} approximate a curve or a polygon with another curve/polygon with less vertices so that the distance between them is less or equal to the specified precision. It uses the Douglas-Peucker algorithm  
 ORB\cite{b5} is a feature detection algorithm like SIFT while being almost two orders of magnitude faster.
 YoloV3 \cite{b5}  is a famous neural network for fast object detection that will be used in this paper for people detection.\\
+A graphical user interfaces has been created to show the work and process automatically the video using tkinter \cite{b12}
 
 \section{Painting Detection}
 All frames are exctracted in sequence from the video and processed independently. The followed pipeline is explained afterwards.
@@ -160,7 +161,7 @@ To obtain a better result also the inverse warping algorithm is utilized.\\
 \section{People Detection}
 A neural network (YoloV3) is used for people detection.\\
 At inference time each video frame is passed through the network that find all bounding boxes containing one of the objects in our classes list.\\
-The weights for the network are obtained from an already trained network on COCO[ reference to COCO paper], a famous dataset containing 80 different classes.\\
+The weights for the network are obtained from an already trained network on COCO \cite{b11}, a famous dataset containing 80 different classes.\\
 In our case the only wanted class is the person one, for ease of use the network has not been modified, but from its output will be deleted all the classes with an id different from 0 that is the id of the person class \ref{fig_People_detection} .\\
 
 \begin{figure}[htbp]
@@ -272,6 +273,12 @@ After this first check, we create a test set composed of 304 instances and calcu
 \bigskip
 
 
+\section{GUI}
+A graphical user interface has been created using tkinter library \cite{b12} to show in real time what our program is doing. It’s also capable to process new video simply by typing its name into the input field.
+Two different threads run at the same time, one for the gui and the other one for our pipeline.
+After a complete analysis, a new video is created showing what the interface has displayed for the entire time of its utilization.
+
+
 \section{Discussions}
 Our approach is based on the assumption that input videos contain a relevant chromatic difference between paintings and background. when this assumption doesn’t occur, for example in the case of a wider shot comprising hallway too, otsu doesn’t manage to correctly differentiate paintings from the rest, which leads to worse performances.
 \subsection*{Tested methods history}
@@ -290,6 +297,8 @@ It was then necessary to face the fact that each method, being based solely on i
 \bibitem{b8} \url{https://docs.python.org/3/library/pickle.html}
 \bibitem{b9} Lowe, David G. "Distinctive image features from scale-invariant keypoints." International journal of computer vision 60.2 (2004): 91-110.
 \bibitem{b10}Zhang, Zhengyou, and Li-Wei He. "Whiteboard scanning and image enhancement." Digital Signal Processing 17.2 (2007): 414-432.
+\bibitem{b11}Lin TY. et al. (2014) Microsoft COCO: Common Objects in Context. In: Fleet D., Pajdla T., Schiele B., Tuytelaars T. (eds) Computer Vision – ECCV 2014. ECCV 2014. Lecture Notes in Computer Science, vol 8693. Springer, Cham
+\bibitem{b12} \url{https://docs.python.org/3/library/tkinter.html}
 
 \end{thebibliography}
 
