@@ -29,7 +29,7 @@ def IoU(bb1, bb2, frameW, frameH):
 
 frameW = 1280
 frameH = 720
-files = glob.glob("vid01/*.txt")
+files = glob.glob("vid12/*.txt")
 iou_list = []
 tp = 0
 fp = 0
