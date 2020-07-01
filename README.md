@@ -4,7 +4,7 @@
 2. Download Weights for yoloV3 : https://pjreddie.com/media/files/yolov3.weights
 3. Put them in yolo/weights as yolov3.weights
 4. Run save_key_points.py to create local db of keypoints
-5. Run main.py and Enjoi the project
+5. Run main.py and Enjoi the project, at the end of the process a file will be created in output/ folder
 6. Run ReplacingPaintings3dModel_main.py to replace paintings in 3d model
 
 ## Description of the functionality:
@@ -12,7 +12,7 @@
 - Given an input video, your code should output a list of bounding boxes (x, y, w, h), being (x,y) the upper-left corner, each containing one painting.
 - Create an interface to visualize given an image the ROI of a painting.
 - Select painting and discard other artifacts.
-- (optional: segment precisely paintings with frames and also statues)
+- (optional: segment precisely paintings with frames)
 ### Painting rectification: correct the perspective distortion of each painting
 - Given an input video and your detections (from the previous point), your code should output a new image for each painting, containing the rectified version of the painting.
 - be careful on not squared painting
@@ -24,12 +24,8 @@
 - Given an input video and people bounding boxes (from the previous point), your code should assign each person to one of the rooms of the Gallery. To do that, you can exploit the painting retrieval procedure (third point), and the mapping between paintings and rooms (in “data.csv”). Also, a map of the Gallery is available (“map.png”) for a better visualization.
 
 ## Optional tasks
-### Determine whether each person is facing a painting
-- Given an input video, people and paintings' detections, determine whether each person is facing a painting or not.
 ### Replace paintings areas in the 3D model with the provided pictures
 - Given a view taken from the 3D model, detect each painting and replace it with its corresponding picture in the paintings DB, appropriately deformed to match the 3D view.
-### Determine the distance of a person to the closest door
-- Find the door, find the walls and the floor, try to compensate and predict distance
 
 ## PaintingDetection Pipeline
 1. Converting From rgb to gray each frame
@@ -75,8 +71,7 @@
     ├── main.py                            # main program to detect paintings
     ├── ReplacingPaintings3dModel_main.py  # main program to relpace paintings in 3d model
     ├── outputs                            # Video edited with bounding box
-    │   ├── VIRB0395
-    │   └── ...                            # videos...
+    │   └── ...                            # videos created by gui
     ├── PaintingDetection
     │   ├── general_utils.py               # general functions
     │   ├── detection_utils.py             # detection functions
@@ -87,7 +82,7 @@
     │   └── ...
     ├── painting_db                        # Database of all Paintings
     ├── videos                             # Example videos ready to use
-    ├── PeopleLocalization                 # Example videos ready to use
+    ├── PeopleLocalization                 # People localization on image map
     │   ├── images
     │   │   └── map.png                    # map of the museum
     │   └── peopleLocalizator.py           # Script that print red dot on actual room
