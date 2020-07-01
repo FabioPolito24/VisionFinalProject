@@ -125,9 +125,8 @@ It performs well because correct matches need to have the closest neighbor signi
 \caption{Orb matches}
 \label{fig_Orb_matches}
 \end{figure}
-\bigskip
 
-Likely, there will be a number of other false positives within similar distances due to the high dimensionality of the feature space.\\
+Likely, there will be a number of other false positives within similar distances due to the high dimensionality of the feature space.
 In our implementation we reject all matches in which the distance ratio is greater than 0.75.
 This allows us to keep the number of correctly retrieved paintings still high but at the same time to decrease the number of false positives.
 A ranking with the 5 best matches found is then created and saved to a CSV file to show the results.
@@ -140,7 +139,7 @@ Over the contour found with the techniques described in \textbf{Precision boosti
 If the shape returned has four vertices we can assume that the process has found a rectangular painting.\\
 Given the four points, we are able to estimate the homography and apply the transformation to rectify the painting.\\
 To calculate the aspect ratio for the projected rectangle we use an implementation based on this paper \cite{b10} which derives the equations assuming a pinhole camera model.\\
-This pipeline is applied to the paintings that don't get a match on the database.
+Another method based on the work done at PyImageSearch\cite{b13} is used in order to rectificate the painting given the four points of the contour.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.8\columnwidth]{../detection_and_rectification/top_association_vid05.png}}
@@ -299,6 +298,7 @@ Then it was necessary to face the fact that each method, being based solely on i
 \bibitem{b10}Zhang, Zhengyou, and Li-Wei He. "Whiteboard scanning and image enhancement." Digital Signal Processing 17.2 (2007): 414-432.
 \bibitem{b11}Lin TY. et al. (2014) Microsoft COCO: Common Objects in Context. In: Fleet D., Pajdla T., Schiele B., Tuytelaars T. (eds) Computer Vision – ECCV 2014. ECCV 2014. Lecture Notes in Computer Science, vol 8693. Springer, Cham
 \bibitem{b12} \url{https://docs.python.org/3/library/tkinter.html}
+\bibitem{b13} \url{https://www.pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/}
 
 \end{thebibliography}
 
