@@ -70,6 +70,7 @@
     .
     ├── main.py                            # main program to detect paintings
     ├── ReplacingPaintings3dModel_main.py  # main program to relpace paintings in 3d model
+	├── save_key_points.py                 # script to generate keypoits db
     ├── outputs                            # Video edited with bounding box
     │   └── ...                            # videos created by gui
     ├── PaintingDetection
@@ -78,7 +79,6 @@
     │   ├── rectification_utils.py         # rectification functions
     │   ├── retrival_utils.py              # retrival functions
     │   ├── histogram.py                   # histogram
-    │   ├── save_key_points.py             # script to generate keypoits db
     │   └── ...
     ├── painting_db                        # Database of all Paintings
     ├── videos                             # Example videos ready to use
